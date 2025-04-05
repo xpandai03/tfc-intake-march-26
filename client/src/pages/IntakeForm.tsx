@@ -180,8 +180,13 @@ export default function IntakeForm() {
   const onSubmit = async (data: FormValues) => {
     try {
       await axios.post(
-        "https://us-central1-phitest-api.cloudfunctions.net/forwardToMake1",
-        data
+        "https://us-central1-phitest-api.cloudfunctions.net/forwardToMake",
+        data,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
       setSubmissionStatus({
         status: "success",
