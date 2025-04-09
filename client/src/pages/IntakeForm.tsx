@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { z } from "zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -26,7 +27,7 @@ const formSchema = z.object({
     required_error: "Please select who you are requesting services for",
   }),
   formCompletedBy: z.string().min(1, "This field is required"),
-  participantNames: z.array(z.string()).optional(),
+  participantNames: z.array(z.object({ name: z.string() })).optional(),
   
   // Section 2: Patient Information
   fullName: z.string().min(1, "Full name is required"),
@@ -200,6 +201,11 @@ export default function IntakeForm() {
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "participantNames",
+  });
+  
   const watchServiceRequestType = watch("serviceRequestType");
   const watchUnderPhysicianCare = watch("underPhysicianCare");
   const watchHasPADDirective = watch("hasPADDirective");
@@ -301,6 +307,46 @@ export default function IntakeForm() {
                 />
                 {errors.serviceRequestType && (
                   <p className="text-red-500 text-sm mt-1">{errors.serviceRequestType.message}</p>
+                )}
+                
+                {(watchServiceRequestType === "My Family" || watchServiceRequestType === "My Partner & Myself") && (
+                  <div className="mt-4 border border-gray-200 rounded-md p-4 bg-gray-50">
+                    <h3 className="text-md font-medium text-gray-700 mb-3">
+                      Please list all participants:
+                    </h3>
+                    
+                    <div className="space-y-3">
+                      {fields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                          <FormField
+                            id={`participantNames.${index}.name`}
+                            label={`Participant ${index + 1}`}
+                            register={register}
+                            error={errors.participantNames?.[index]?.name ? { message: "Name is required" } : undefined}
+                            required
+                          />
+                          <Button 
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mt-5"
+                            onClick={() => remove(index)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => append({ name: "" })}
+                        className="mt-2"
+                      >
+                        Add Participant
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -542,6 +588,22 @@ export default function IntakeForm() {
                     error={errors.primaryInsuranceDOB}
                   />
                 </div>
+                
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-4">
+                  <FormField
+                    id="primaryInsuredName"
+                    label="Insured's Name (if different from patient)"
+                    register={register}
+                    error={errors.primaryInsuredName}
+                  />
+                  <FormField
+                    id="subscriberID"
+                    label="Subscriber ID"
+                    register={register}
+                    error={errors.subscriberID}
+                    required
+                  />
+                </div>
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
@@ -589,6 +651,21 @@ export default function IntakeForm() {
                         type="date"
                         register={register}
                         error={errors.secondaryInsuranceDOB}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-4">
+                      <FormField
+                        id="secondaryInsuredName"
+                        label="Insured's Name (if different from patient)"
+                        register={register}
+                        error={errors.secondaryInsuredName}
+                      />
+                      <FormField
+                        id="secondarySubscriberID"
+                        label="Subscriber ID"
+                        register={register}
+                        error={errors.secondarySubscriberID}
                       />
                     </div>
                   </>
@@ -645,45 +722,101 @@ export default function IntakeForm() {
                   </div>
                 )}
 
-                <h3 className="text-lg font-medium text-gray-700">8. PAD Directive</h3>
-                
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Do you have a Psychiatric Advance Directive (PAD)? <span className="text-red-500">*</span>
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="hasPADDirective"
-                    render={({ field }) => (
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex space-x-6"
-                      >
-                        {["Yes", "No", "Not Sure"].map((option) => (
-                          <div key={option} className="flex items-center">
-                            <RadioGroupItem id={`pad-${option}`} value={option} />
-                            <Label htmlFor={`pad-${option}`} className="ml-2">{option}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    )}
-                  />
-                  {errors.hasPADDirective && (
-                    <p className="text-red-500 text-sm mt-1">{errors.hasPADDirective.message}</p>
-                  )}
-                </div>
+                <div className="border border-gray-200 bg-gray-50 p-4 rounded-md mb-6">
+                  <h3 className="text-lg font-medium text-gray-700 mb-3">8. Psychiatric Advance Directive (PAD)</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    A PAD is a legal document that allows you to state your preferences for mental health treatment
+                    if you experience a mental health crisis in the future and are unable to make decisions.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="block text-sm font-medium text-gray-700 mb-1">
+                        Do you have a Psychiatric Advance Directive? <span className="text-red-500">*</span>
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="hasPADDirective"
+                        render={({ field }) => (
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex space-x-6"
+                          >
+                            {["Yes", "No", "Not Sure"].map((option) => (
+                              <div key={option} className="flex items-center">
+                                <RadioGroupItem id={`pad-${option}`} value={option} />
+                                <Label htmlFor={`pad-${option}`} className="ml-2">{option}</Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        )}
+                      />
+                      {errors.hasPADDirective && (
+                        <p className="text-red-500 text-sm mt-1">{errors.hasPADDirective.message}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label className="block text-sm font-medium text-gray-700 mb-1">
+                        Do you understand what a PAD is?
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="understandPAD"
+                        render={({ field }) => (
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex space-x-6"
+                          >
+                            {["Yes", "No", "Not Sure"].map((option) => (
+                              <div key={option} className="flex items-center">
+                                <RadioGroupItem id={`understand-pad-${option}`} value={option} />
+                                <Label htmlFor={`understand-pad-${option}`} className="ml-2">{option}</Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        )}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="block text-sm font-medium text-gray-700 mb-1">
+                        Would you like more information about PADs?
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="wantPADInfo"
+                        render={({ field }) => (
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex space-x-6"
+                          >
+                            {["Yes", "No"].map((option) => (
+                              <div key={option} className="flex items-center">
+                                <RadioGroupItem id={`want-pad-info-${option}`} value={option} />
+                                <Label htmlFor={`want-pad-info-${option}`} className="ml-2">{option}</Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        )}
+                      />
+                    </div>
 
-                {watchHasPADDirective === "Yes" && (
-                  <FormField
-                    id="padDirectiveExplanation"
-                    label="Please explain"
-                    register={register}
-                    error={errors.padDirectiveExplanation}
-                    multiline
-                    rows={2}
-                  />
-                )}
+                    {watchHasPADDirective === "Yes" && (
+                      <FormField
+                        id="padDirectiveExplanation"
+                        label="Please provide details about your PAD"
+                        register={register}
+                        error={errors.padDirectiveExplanation}
+                        multiline
+                        rows={2}
+                      />
+                    )}
+                  </div>
+                </div>
 
                 <h3 className="text-lg font-medium text-gray-700">9. Current Medications</h3>
                 
@@ -702,9 +835,9 @@ export default function IntakeForm() {
                   <Label className="block text-sm font-medium text-gray-700 mb-3">
                     Select all that apply <span className="text-red-500">*</span>
                   </Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {therapyReasons.map((reason) => (
-                      <div key={reason} className="flex items-center">
+                      <div key={reason} className="flex items-center bg-gray-50 p-2 rounded-md">
                         <Controller
                           control={control}
                           name="reasonsForTherapy"
@@ -722,7 +855,7 @@ export default function IntakeForm() {
                             />
                           )}
                         />
-                        <Label htmlFor={`reason-${reason}`} className="ml-2">{reason}</Label>
+                        <Label htmlFor={`reason-${reason}`} className="ml-2 text-gray-700">{reason}</Label>
                       </div>
                     ))}
                   </div>
@@ -870,12 +1003,35 @@ export default function IntakeForm() {
                       register={register}
                       error={errors.priorCounselingWhere}
                     />
-                    <FormField
-                      id="priorCounselingOutcome"
-                      label="Outcome"
-                      register={register}
-                      error={errors.priorCounselingOutcome}
-                    />
+                    <div>
+                      <Label className="block text-sm font-medium text-gray-700 mb-1">
+                        Outcome
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="priorCounselingOutcome"
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select an outcome" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Successful">Successful</SelectItem>
+                              <SelectItem value="Somewhat helpful">Somewhat helpful</SelectItem>
+                              <SelectItem value="Not helpful">Not helpful</SelectItem>
+                              <SelectItem value="Incomplete">Incomplete</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {errors.priorCounselingOutcome && (
+                        <p className="text-red-500 text-sm mt-1">{errors.priorCounselingOutcome.message}</p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -886,38 +1042,47 @@ export default function IntakeForm() {
               <div className="space-y-4">
                 <h2 className="text-xl font-medium text-gray-700">14. Signature</h2>
                 
-                <FormField
-                  id="initials"
-                  label="Digital Signature (Type your initials)"
-                  register={register}
-                  error={errors.initials}
-                  required
-                />
-                
-                <div className="mt-4">
-                  <Controller
-                    control={control}
-                    name="confirmAccuracy"
-                    render={({ field }) => (
-                      <div className="flex items-start">
-                        <div className="flex items-center h-5">
-                          <Checkbox
-                            id="confirmAccuracy"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </div>
-                        <div className="ml-3 text-sm">
-                          <Label htmlFor="confirmAccuracy" className="text-gray-700">
-                            I confirm that the information submitted is accurate and complete to the best of my knowledge.
-                          </Label>
-                        </div>
-                      </div>
-                    )}
+                <div className="border border-gray-200 bg-gray-50 p-4 rounded-md">
+                  <p className="text-sm text-gray-700 mb-4">
+                    By typing my initials below and checking the confirmation box, I acknowledge that I understand this 
+                    is a request for services. Submitting this form does not guarantee services, and I understand that 
+                    someone will contact me to discuss next steps. I confirm that the information I have provided is 
+                    accurate and complete to the best of my knowledge.
+                  </p>
+                  
+                  <FormField
+                    id="initials"
+                    label="Digital Signature (Type your initials) *"
+                    register={register}
+                    error={errors.initials}
+                    required
                   />
-                  {errors.confirmAccuracy && (
-                    <p className="text-red-500 text-sm mt-1">{errors.confirmAccuracy.message}</p>
-                  )}
+                  
+                  <div className="mt-4">
+                    <Controller
+                      control={control}
+                      name="confirmAccuracy"
+                      render={({ field }) => (
+                        <div className="flex items-start">
+                          <div className="flex items-center h-5">
+                            <Checkbox
+                              id="confirmAccuracy"
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </div>
+                          <div className="ml-3 text-sm">
+                            <Label htmlFor="confirmAccuracy" className="text-gray-700">
+                              I confirm that the information submitted is accurate and complete to the best of my knowledge. <span className="text-red-500">*</span>
+                            </Label>
+                          </div>
+                        </div>
+                      )}
+                    />
+                    {errors.confirmAccuracy && (
+                      <p className="text-red-500 text-sm mt-1">{errors.confirmAccuracy.message}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
