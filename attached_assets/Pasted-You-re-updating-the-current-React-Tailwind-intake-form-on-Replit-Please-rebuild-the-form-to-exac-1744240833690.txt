@@ -1,0 +1,72 @@
+You're updating the current React + Tailwind intake form on Replit.
+
+Please rebuild the form to exactly mirror the layout and structure of the original “Request for Services” Word document **plus** additional feedback captured on a 4/8 client call.
+
+---
+
+🔐 Keep in mind:
+- This form contains PHI and must remain frontend-only
+- On submit, send data via POST to this endpoint:  
+  https://us-central1-phitest-api.cloudfunctions.net/forwardToMake
+- No backend code or local storage
+- Use React + Tailwind only
+
+---
+
+🧾 FORM STRUCTURE (Updated):
+
+1. **Requesting Services For**
+   - Radio buttons: `My Child`, `Myself`, `My Family`, `My Partner & Myself`
+   - "Form completed by" (text input)
+   - If `My Family` or `My Partner & Myself` is selected → show inputs to list all participant names (they each need separate OA records later)
+
+2. **Patient Info**
+   - Full Name, Preferred Name, DOB
+   - Gender at Birth (dropdown), Gender Identity (text)
+   - Address: Street, Apt, City, State, Zip
+   - Email, Home Phone, Mobile Phone
+   - Consent to email (yes/no radio)
+
+3. **Insurance**
+   - Insurance Type: checkboxes (Private Pay, Commercial, Medicaid, EAP)
+   - Primary Insurance: Provider, ID, Insured’s Name, Insured’s DOB
+   - Do you have secondary insurance? (yes/no)  
+     → If yes: show same Secondary Insurance fields
+   - **Add Subscriber ID field** (this is required in Office Ally)
+
+4. **Clinical History**
+   - Under physician’s care? (yes/no)
+   - If yes: For what? + Physician’s Name
+   - Psychiatrist’s Name
+   - Psychiatric Advance Directive questions (3 yes/no + optional explanation)
+   - Current Medications (name/dosage/frequency/reason textarea)
+
+5. **Reason for Referral**
+   - Checkbox grid (~24 issues: anxiety, trauma, parenting, etc.)
+   - “Other” (text field)
+
+6. **Motivational Interviewing Section**
+   - “Why are you seeking therapy?” (textarea)
+   - 3 motivational questions using the exact phrasing from the original form
+     - Example: “How important is it for you to get help right now?”
+     - Each is a dropdown scale from 1–10
+
+7. **Prior Counseling**
+   - Have you received counseling before? (yes/no)
+   - Inpatient / Outpatient (checkboxes)
+   - When, Where, By Whom, Length, Outcome (text + dropdown)
+
+8. **Signature**
+   - Initials input (required)
+   - Confirmation paragraph: “I confirm that the information submitted is accurate...”
+   - (Optional) e-signature component
+
+---
+
+✅ Additional instructions:
+- Do not change the submit endpoint
+- Keep all fields grouped by section number
+- Use Tailwind spacing + typography for visual clarity
+- This form is going to GCP for HIPAA-safe processing → only include client-side validation if necessary
+
+Let me know once the updated version is ready and we’ll test the submission flow.

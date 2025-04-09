@@ -7,6 +7,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import FormField from "@/components/FormField";
 import SubmitButton from "@/components/SubmitButton";
 import FormResponse from "@/components/FormResponse";
@@ -14,15 +21,14 @@ import axios from "axios";
 
 // Form validation schema
 const formSchema = z.object({
-  // Section 1: Service Request Type
+  // Section 1: Requesting Services For
   serviceRequestType: z.enum(["My Child", "Myself", "My Family", "My Partner & Myself"], {
     required_error: "Please select who you are requesting services for",
   }),
-  
-  // Section 2: Form Completed By
   formCompletedBy: z.string().min(1, "This field is required"),
+  participantNames: z.array(z.string()).optional(),
   
-  // Section 3: Patient Information
+  // Section 2: Patient Information
   fullName: z.string().min(1, "Full name is required"),
   preferredName: z.string().optional(),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
@@ -36,57 +42,69 @@ const formSchema = z.object({
   state: z.string().min(1, "State is required"),
   zip: z.string().min(5, "Valid zip code is required"),
   homePhone: z.string().optional(),
-  workPhone: z.string().optional(),
   mobilePhone: z.string().min(10, "Valid mobile phone is required"),
   email: z.string().email("Valid email is required"),
   consentToEmail: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you consent to email",
   }),
   
-  // Section 4-6: Insurance Information
+  // Section 3: Insurance Information
   insuranceType: z.array(z.string()).min(1, "Select at least one insurance type"),
   primaryInsurance: z.string().optional(),
   primaryInsuranceID: z.string().optional(),
+  primaryInsuredName: z.string().optional(),
   primaryInsuranceDOB: z.string().optional(),
+  subscriberID: z.string().optional(),
   hasSecondaryInsurance: z.enum(["Yes", "No"]).optional(),
   secondaryInsurance: z.string().optional(),
   secondaryInsuranceID: z.string().optional(),
+  secondaryInsuredName: z.string().optional(),
   secondaryInsuranceDOB: z.string().optional(),
+  secondarySubscriberID: z.string().optional(),
   
-  // Section 7-10: Medical History
+  // Section 4: Clinical History
   underPhysicianCare: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you are under a physician's care",
   }),
+  physicianCareReason: z.string().optional(),
   physicianName: z.string().optional(),
-  physicianPhone: z.string().optional(),
+  psychiatristName: z.string().optional(),
   hasPADDirective: z.enum(["Yes", "No", "Not Sure"], {
     required_error: "Please indicate if you have a PAD directive",
   }),
+  understandPAD: z.enum(["Yes", "No", "Not Sure"]).optional(),
+  wantPADInfo: z.enum(["Yes", "No"]).optional(),
   padDirectiveExplanation: z.string().optional(),
-  medications: z.array(z.object({
-    medication: z.string().optional(),
-    dosage: z.string().optional(),
-    frequency: z.string().optional(),
-    reason: z.string().optional(),
-  })).optional(),
-  reasonsForTherapy: z.array(z.string()).min(1, "Please select at least one reason for therapy"),
+  medications: z.string().optional(),
   
-  // Section 11-13: Readiness and Past Counseling
-  therapySummary: z.string().min(1, "Please provide a summary"),
-  readinessScales: z.object({
-    mentalEmotional: z.string().min(1, "Please rate your mental/emotional readiness"),
-    logistical: z.string().min(1, "Please rate your logistical readiness"),
-    financial: z.string().min(1, "Please rate your financial readiness"),
+  // Section 5: Reason for Referral
+  reasonsForTherapy: z.array(z.string()).min(1, "Please select at least one reason for therapy"),
+  otherReasonForTherapy: z.string().optional(),
+  
+  // Section 6: Motivational Interviewing
+  therapyGoal: z.string().min(1, "Please provide your therapy goal"),
+  motivationScales: z.object({
+    importance: z.string().min(1, "Please rate how important it is for you to get help"),
+    confidence: z.string().min(1, "Please rate your confidence in your ability to make changes"),
+    readiness: z.string().min(1, "Please rate how ready you are to make these changes"),
   }),
+  
+  // Section 7: Prior Counseling
   priorCounseling: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you've had prior counseling",
   }),
-  priorCounselingWho: z.string().optional(),
+  counselingType: z.array(z.string()).optional(),
+  priorCounselingWhen: z.string().optional(),
   priorCounselingWhere: z.string().optional(),
+  priorCounselingByWhom: z.string().optional(),
+  priorCounselingLength: z.string().optional(),
   priorCounselingOutcome: z.string().optional(),
   
-  // Section 14: Signature
-  signature: z.string().min(1, "Signature is required"),
+  // Section 8: Signature
+  initials: z.string().min(1, "Initials are required"),
+  confirmAccuracy: z.boolean().refine(val => val === true, {
+    message: "You must confirm the accuracy of the information",
+  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -109,8 +127,12 @@ export default function IntakeForm() {
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      // Section 1: Requesting Services For
       serviceRequestType: undefined,
       formCompletedBy: "",
+      participantNames: [],
+      
+      // Section 2: Patient Information
       fullName: "",
       preferredName: "",
       dateOfBirth: "",
@@ -122,43 +144,63 @@ export default function IntakeForm() {
       state: "",
       zip: "",
       homePhone: "",
-      workPhone: "",
       mobilePhone: "",
       email: "",
       consentToEmail: undefined,
+      
+      // Section 3: Insurance Information
       insuranceType: [],
       primaryInsurance: "",
       primaryInsuranceID: "",
+      primaryInsuredName: "",
       primaryInsuranceDOB: "",
+      subscriberID: "",
       hasSecondaryInsurance: undefined,
       secondaryInsurance: "",
       secondaryInsuranceID: "",
+      secondaryInsuredName: "",
       secondaryInsuranceDOB: "",
+      secondarySubscriberID: "",
+      
+      // Section 4: Clinical History
       underPhysicianCare: undefined,
+      physicianCareReason: "",
       physicianName: "",
-      physicianPhone: "",
+      psychiatristName: "",
       hasPADDirective: undefined,
+      understandPAD: undefined,
+      wantPADInfo: undefined,
       padDirectiveExplanation: "",
-      medications: [
-        { medication: "", dosage: "", frequency: "", reason: "" },
-        { medication: "", dosage: "", frequency: "", reason: "" },
-        { medication: "", dosage: "", frequency: "", reason: "" },
-      ],
+      medications: "",
+      
+      // Section 5: Reason for Referral
       reasonsForTherapy: [],
-      therapySummary: "",
-      readinessScales: {
-        mentalEmotional: "",
-        logistical: "",
-        financial: "",
+      otherReasonForTherapy: "",
+      
+      // Section 6: Motivational Interviewing
+      therapyGoal: "",
+      motivationScales: {
+        importance: "",
+        confidence: "",
+        readiness: "",
       },
+      
+      // Section 7: Prior Counseling
       priorCounseling: undefined,
-      priorCounselingWho: "",
+      counselingType: [],
+      priorCounselingWhen: "",
       priorCounselingWhere: "",
+      priorCounselingByWhom: "",
+      priorCounselingLength: "",
       priorCounselingOutcome: "",
-      signature: "",
+      
+      // Section 8: Signature
+      initials: "",
+      confirmAccuracy: false,
     },
   });
 
+  const watchServiceRequestType = watch("serviceRequestType");
   const watchUnderPhysicianCare = watch("underPhysicianCare");
   const watchHasPADDirective = watch("hasPADDirective");
   const watchHasSecondaryInsurance = watch("hasSecondaryInsurance");
@@ -169,12 +211,20 @@ export default function IntakeForm() {
     "Depression", "Anxiety", "Relationship Issues", "Grief/Loss", 
     "Trauma", "Stress", "Self-esteem", "Anger Management",
     "Family Conflict", "Life Transitions", "Career Challenges", "Addiction",
-    "Eating Disorders", "OCD", "PTSD", "Bipolar Disorder"
+    "Eating Disorders", "OCD", "PTSD", "Bipolar Disorder",
+    "Parenting Issues", "Communication Problems", "Sexual Problems",
+    "Chronic Pain", "Identity Issues", "Suicidal Thoughts",
+    "Sleep Problems", "Work Stress", "Financial Stress"
   ];
 
   // Insurance types
   const insuranceTypes = [
-    "Private Pay", "Commercial Insurance", "Medicare", "Medicaid"
+    "Private Pay", "Commercial Insurance", "Medicaid", "EAP"
+  ];
+  
+  // Counseling types
+  const counselingTypes = [
+    "Inpatient", "Outpatient"
   ];
 
   const onSubmit = async (data: FormValues) => {
@@ -375,20 +425,13 @@ export default function IntakeForm() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <FormField
                     id="homePhone"
                     label="Home Phone"
                     type="tel"
                     register={register}
                     error={errors.homePhone}
-                  />
-                  <FormField
-                    id="workPhone"
-                    label="Work Phone"
-                    type="tel"
-                    register={register}
-                    error={errors.workPhone}
                   />
                   <FormField
                     id="mobilePhone"
@@ -594,11 +637,10 @@ export default function IntakeForm() {
                       error={errors.physicianName}
                     />
                     <FormField
-                      id="physicianPhone"
-                      label="Physician's Phone"
-                      type="tel"
+                      id="physicianCareReason"
+                      label="For what condition or issue?"
                       register={register}
-                      error={errors.physicianPhone}
+                      error={errors.physicianCareReason}
                     />
                   </div>
                 )}
@@ -645,48 +687,14 @@ export default function IntakeForm() {
 
                 <h3 className="text-lg font-medium text-gray-700">9. Current Medications</h3>
                 
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medication</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {[0, 1, 2].map((index) => (
-                        <tr key={index}>
-                          <td className="px-2 py-2">
-                            <input
-                              {...register(`medications.${index}.medication`)}
-                              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            />
-                          </td>
-                          <td className="px-2 py-2">
-                            <input
-                              {...register(`medications.${index}.dosage`)}
-                              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            />
-                          </td>
-                          <td className="px-2 py-2">
-                            <input
-                              {...register(`medications.${index}.frequency`)}
-                              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            />
-                          </td>
-                          <td className="px-2 py-2">
-                            <input
-                              {...register(`medications.${index}.reason`)}
-                              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <FormField
+                  id="medications"
+                  label="Current Medications (name/dosage/frequency/reason)"
+                  register={register}
+                  error={errors.medications}
+                  multiline
+                  rows={4}
+                />
 
                 <h3 className="text-lg font-medium text-gray-700">10. Reasons for Seeking Therapy</h3>
                 
@@ -731,28 +739,28 @@ export default function IntakeForm() {
                 <h2 className="text-xl font-medium text-gray-700">11. Therapy Goals</h2>
                 
                 <FormField
-                  id="therapySummary"
+                  id="therapyGoal"
                   label="Please summarize what you hope to accomplish with therapy"
                   register={register}
-                  error={errors.therapySummary}
+                  error={errors.therapyGoal}
                   multiline
                   rows={4}
                   required
                 />
 
-                <h3 className="text-lg font-medium text-gray-700">12. Readiness for Change</h3>
+                <h3 className="text-lg font-medium text-gray-700">12. Motivational Scales</h3>
                 <p className="text-sm text-gray-600 mb-3">
-                  Please rate your readiness for change in each area (1 = Not ready, 10 = Very ready)
+                  Please rate the following on a scale from 1 to 10 (1 = Low, 10 = High)
                 </p>
 
                 <div className="space-y-4">
                   <div>
                     <Label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mental/Emotional Readiness <span className="text-red-500">*</span>
+                      How important is it for you to get help right now? <span className="text-red-500">*</span>
                     </Label>
                     <Controller
                       control={control}
-                      name="readinessScales.mentalEmotional"
+                      name="motivationScales.importance"
                       render={({ field }) => (
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -761,25 +769,22 @@ export default function IntakeForm() {
                         >
                           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                             <div key={num} className="flex flex-col items-center">
-                              <RadioGroupItem id={`mental-${num}`} value={num.toString()} />
-                              <Label htmlFor={`mental-${num}`} className="text-xs mt-1">{num}</Label>
+                              <RadioGroupItem id={`importance-${num}`} value={num.toString()} />
+                              <Label htmlFor={`importance-${num}`} className="text-xs mt-1">{num}</Label>
                             </div>
                           ))}
                         </RadioGroup>
                       )}
                     />
-                    {errors.readinessScales?.mentalEmotional && (
-                      <p className="text-red-500 text-sm mt-1">{errors.readinessScales.mentalEmotional.message}</p>
-                    )}
                   </div>
 
                   <div>
                     <Label className="block text-sm font-medium text-gray-700 mb-2">
-                      Logistical Readiness (Time, Transportation) <span className="text-red-500">*</span>
+                      How confident are you in your ability to make changes? <span className="text-red-500">*</span>
                     </Label>
                     <Controller
                       control={control}
-                      name="readinessScales.logistical"
+                      name="motivationScales.confidence"
                       render={({ field }) => (
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -788,25 +793,22 @@ export default function IntakeForm() {
                         >
                           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                             <div key={num} className="flex flex-col items-center">
-                              <RadioGroupItem id={`logistical-${num}`} value={num.toString()} />
-                              <Label htmlFor={`logistical-${num}`} className="text-xs mt-1">{num}</Label>
+                              <RadioGroupItem id={`confidence-${num}`} value={num.toString()} />
+                              <Label htmlFor={`confidence-${num}`} className="text-xs mt-1">{num}</Label>
                             </div>
                           ))}
                         </RadioGroup>
                       )}
                     />
-                    {errors.readinessScales?.logistical && (
-                      <p className="text-red-500 text-sm mt-1">{errors.readinessScales.logistical.message}</p>
-                    )}
                   </div>
 
                   <div>
                     <Label className="block text-sm font-medium text-gray-700 mb-2">
-                      Financial Readiness <span className="text-red-500">*</span>
+                      How ready are you to make these changes? <span className="text-red-500">*</span>
                     </Label>
                     <Controller
                       control={control}
-                      name="readinessScales.financial"
+                      name="motivationScales.readiness"
                       render={({ field }) => (
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -815,16 +817,13 @@ export default function IntakeForm() {
                         >
                           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                             <div key={num} className="flex flex-col items-center">
-                              <RadioGroupItem id={`financial-${num}`} value={num.toString()} />
-                              <Label htmlFor={`financial-${num}`} className="text-xs mt-1">{num}</Label>
+                              <RadioGroupItem id={`readiness-${num}`} value={num.toString()} />
+                              <Label htmlFor={`readiness-${num}`} className="text-xs mt-1">{num}</Label>
                             </div>
                           ))}
                         </RadioGroup>
                       )}
                     />
-                    {errors.readinessScales?.financial && (
-                      <p className="text-red-500 text-sm mt-1">{errors.readinessScales.financial.message}</p>
-                    )}
                   </div>
                 </div>
 
@@ -860,10 +859,10 @@ export default function IntakeForm() {
                 {watchPriorCounseling === "Yes" && (
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                     <FormField
-                      id="priorCounselingWho"
+                      id="priorCounselingByWhom"
                       label="Who did you see?"
                       register={register}
-                      error={errors.priorCounselingWho}
+                      error={errors.priorCounselingByWhom}
                     />
                     <FormField
                       id="priorCounselingWhere"
@@ -888,12 +887,38 @@ export default function IntakeForm() {
                 <h2 className="text-xl font-medium text-gray-700">14. Signature</h2>
                 
                 <FormField
-                  id="signature"
-                  label="Digital Signature (Type your full name)"
+                  id="initials"
+                  label="Digital Signature (Type your initials)"
                   register={register}
-                  error={errors.signature}
+                  error={errors.initials}
                   required
                 />
+                
+                <div className="mt-4">
+                  <Controller
+                    control={control}
+                    name="confirmAccuracy"
+                    render={({ field }) => (
+                      <div className="flex items-start">
+                        <div className="flex items-center h-5">
+                          <Checkbox
+                            id="confirmAccuracy"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </div>
+                        <div className="ml-3 text-sm">
+                          <Label htmlFor="confirmAccuracy" className="text-gray-700">
+                            I confirm that the information submitted is accurate and complete to the best of my knowledge.
+                          </Label>
+                        </div>
+                      </div>
+                    )}
+                  />
+                  {errors.confirmAccuracy && (
+                    <p className="text-red-500 text-sm mt-1">{errors.confirmAccuracy.message}</p>
+                  )}
+                </div>
               </div>
 
               <SubmitButton isSubmitting={isSubmitting} />
