@@ -72,13 +72,15 @@ const formSchema = z.object({
   
   // Reasons for Seeking Services
   reasonsForTherapy: z.array(z.string()).min(1, "Please select at least one reason for therapy"),
-  whySeekingServices: z.string().min(1, "Please explain why you are seeking services"),
+  reasonForSeeking: z.string().min(1, "Please explain why you are seeking services"),
   
   // Prior Counseling
   priorCounseling: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you've had prior counseling",
   }),
-  priorCounselingDetails: z.string().optional(),
+  priorCounselingByWhom: z.string().optional(),
+  priorCounselingWhere: z.string().optional(),
+  priorCounselingOutcome: z.string().optional(),
   
   // Signature
   initials: z.string().min(1, "Initials are required"),
@@ -147,11 +149,13 @@ export default function IntakeForm() {
       
       // Reasons for Seeking Services
       reasonsForTherapy: [],
-      whySeekingServices: "",
+      reasonForSeeking: "",
       
       // Prior Counseling
       priorCounseling: undefined,
-      priorCounselingDetails: "",
+      priorCounselingByWhom: "",
+      priorCounselingWhere: "",
+      priorCounselingOutcome: "",
       
       // Signature
       initials: "",
