@@ -28,6 +28,7 @@ const formSchema = z.object({
   }),
   formCompletedBy: z.string().min(1, "This field is required"),
   participantNames: z.array(z.object({ name: z.string() })).optional(),
+  custodyType: z.enum(["Sole Custody", "Joint Custody", "CYFD Custody", "Other"]).optional(),
   
   // Section 2: Patient Information
   fullName: z.string().min(1, "Full name is required"),
@@ -51,57 +52,35 @@ const formSchema = z.object({
   
   // Section 3: Insurance Information
   insuranceType: z.array(z.string()).min(1, "Select at least one insurance type"),
+  
+  // Primary Insurance
   primaryInsurance: z.string().optional(),
   primaryInsuranceID: z.string().optional(),
-  primaryInsuredName: z.string().optional(),
-  primaryInsuranceDOB: z.string().optional(),
+  subscriberRelation: z.enum(["Self", "Parent", "Child", "Partner"]).optional(),
+  primarySubscriberName: z.string().optional(),
+  primarySubscriberDOB: z.string().optional(),
   subscriberID: z.string().optional(),
+  
+  // Secondary Insurance
   hasSecondaryInsurance: z.enum(["Yes", "No"]).optional(),
   secondaryInsurance: z.string().optional(),
   secondaryInsuranceID: z.string().optional(),
-  secondaryInsuredName: z.string().optional(),
-  secondaryInsuranceDOB: z.string().optional(),
+  secondarySubscriberRelation: z.enum(["Self", "Parent", "Child", "Partner"]).optional(),
+  secondarySubscriberName: z.string().optional(),
+  secondarySubscriberDOB: z.string().optional(),
   secondarySubscriberID: z.string().optional(),
   
-  // Section 4: Clinical History
-  underPhysicianCare: z.enum(["Yes", "No"], {
-    required_error: "Please indicate if you are under a physician's care",
-  }),
-  physicianCareReason: z.string().optional(),
-  physicianName: z.string().optional(),
-  psychiatristName: z.string().optional(),
-  hasPADDirective: z.enum(["Yes", "No", "Not Sure"], {
-    required_error: "Please indicate if you have a PAD directive",
-  }),
-  understandPAD: z.enum(["Yes", "No", "Not Sure"]).optional(),
-  wantPADInfo: z.enum(["Yes", "No"]).optional(),
-  padDirectiveExplanation: z.string().optional(),
-  medications: z.string().optional(),
-  
-  // Section 5: Reason for Referral
+  // Reasons for Seeking Services
   reasonsForTherapy: z.array(z.string()).min(1, "Please select at least one reason for therapy"),
-  otherReasonForTherapy: z.string().optional(),
+  whySeekingServices: z.string().min(1, "Please explain why you are seeking services"),
   
-  // Section 6: Motivational Interviewing
-  therapyGoal: z.string().min(1, "Please provide your therapy goal"),
-  motivationScales: z.object({
-    importance: z.string().min(1, "Please rate how important it is for you to get help"),
-    confidence: z.string().min(1, "Please rate your confidence in your ability to make changes"),
-    readiness: z.string().min(1, "Please rate how ready you are to make these changes"),
-  }),
-  
-  // Section 7: Prior Counseling
+  // Prior Counseling
   priorCounseling: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you've had prior counseling",
   }),
-  counselingType: z.array(z.string()).optional(),
-  priorCounselingWhen: z.string().optional(),
-  priorCounselingWhere: z.string().optional(),
-  priorCounselingByWhom: z.string().optional(),
-  priorCounselingLength: z.string().optional(),
-  priorCounselingOutcome: z.string().optional(),
+  priorCounselingDetails: z.string().optional(),
   
-  // Section 8: Signature
+  // Signature
   initials: z.string().min(1, "Initials are required"),
   confirmAccuracy: z.boolean().refine(val => val === true, {
     message: "You must confirm the accuracy of the information",
@@ -132,6 +111,7 @@ export default function IntakeForm() {
       serviceRequestType: undefined,
       formCompletedBy: "",
       participantNames: [],
+      custodyType: undefined,
       
       // Section 2: Patient Information
       fullName: "",
@@ -153,49 +133,27 @@ export default function IntakeForm() {
       insuranceType: [],
       primaryInsurance: "",
       primaryInsuranceID: "",
-      primaryInsuredName: "",
-      primaryInsuranceDOB: "",
+      subscriberRelation: undefined,
+      primarySubscriberName: "",
+      primarySubscriberDOB: "",
       subscriberID: "",
       hasSecondaryInsurance: undefined,
       secondaryInsurance: "",
       secondaryInsuranceID: "",
-      secondaryInsuredName: "",
-      secondaryInsuranceDOB: "",
+      secondarySubscriberRelation: undefined,
+      secondarySubscriberName: "",
+      secondarySubscriberDOB: "",
       secondarySubscriberID: "",
       
-      // Section 4: Clinical History
-      underPhysicianCare: undefined,
-      physicianCareReason: "",
-      physicianName: "",
-      psychiatristName: "",
-      hasPADDirective: undefined,
-      understandPAD: undefined,
-      wantPADInfo: undefined,
-      padDirectiveExplanation: "",
-      medications: "",
-      
-      // Section 5: Reason for Referral
+      // Reasons for Seeking Services
       reasonsForTherapy: [],
-      otherReasonForTherapy: "",
+      whySeekingServices: "",
       
-      // Section 6: Motivational Interviewing
-      therapyGoal: "",
-      motivationScales: {
-        importance: "",
-        confidence: "",
-        readiness: "",
-      },
-      
-      // Section 7: Prior Counseling
+      // Prior Counseling
       priorCounseling: undefined,
-      counselingType: [],
-      priorCounselingWhen: "",
-      priorCounselingWhere: "",
-      priorCounselingByWhom: "",
-      priorCounselingLength: "",
-      priorCounselingOutcome: "",
+      priorCounselingDetails: "",
       
-      // Section 8: Signature
+      // Signature
       initials: "",
       confirmAccuracy: false,
     },
@@ -206,11 +164,10 @@ export default function IntakeForm() {
     name: "participantNames",
   });
   
-  const watchServiceRequestType = watch("serviceRequestType");
-  const watchUnderPhysicianCare = watch("underPhysicianCare");
-  const watchHasPADDirective = watch("hasPADDirective");
-  const watchHasSecondaryInsurance = watch("hasSecondaryInsurance");
-  const watchPriorCounseling = watch("priorCounseling");
+  // Watch for form field changes
+  const watchServiceRequestType = watch("serviceRequestType" as const);
+  const watchHasSecondaryInsurance = watch("hasSecondaryInsurance" as const);
+  const watchPriorCounseling = watch("priorCounseling" as const);
 
   // Therapy reasons checkbox options
   const therapyReasons = [
@@ -309,6 +266,37 @@ export default function IntakeForm() {
                   <p className="text-red-500 text-sm mt-1">{errors.serviceRequestType.message}</p>
                 )}
                 
+                {watchServiceRequestType === "My Child" && (
+                  <div className="mt-4">
+                    <Label className="block text-sm font-medium text-gray-700 mb-1">
+                      Custody Type
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="custodyType"
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select custody type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Sole Custody">Sole Custody</SelectItem>
+                            <SelectItem value="Joint Custody">Joint Custody</SelectItem>
+                            <SelectItem value="CYFD Custody">CYFD Custody</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.custodyType && (
+                      <p className="text-red-500 text-sm mt-1">{errors.custodyType.message}</p>
+                    )}
+                  </div>
+                )}
+
                 {(watchServiceRequestType === "My Family" || watchServiceRequestType === "My Partner & Myself") && (
                   <div className="mt-4 border border-gray-200 rounded-md p-4 bg-gray-50">
                     <h3 className="text-md font-medium text-gray-700 mb-3">
@@ -322,7 +310,7 @@ export default function IntakeForm() {
                             id={`participantNames.${index}.name`}
                             label={`Participant ${index + 1}`}
                             register={register}
-                            error={errors.participantNames?.[index]?.name ? { message: "Name is required" } : undefined}
+                            error={errors.participantNames?.[index]?.name}
                             required
                           />
                           <Button 
@@ -580,21 +568,49 @@ export default function IntakeForm() {
                     register={register}
                     error={errors.primaryInsuranceID}
                   />
-                  <FormField
-                    id="primaryInsuranceDOB"
-                    label="Insured's DOB"
-                    type="date"
-                    register={register}
-                    error={errors.primaryInsuranceDOB}
-                  />
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700 mb-1">
+                      Subscriber is:
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="subscriberRelation"
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select relationship" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Self">Self</SelectItem>
+                            <SelectItem value="Parent">Parent</SelectItem>
+                            <SelectItem value="Child">Child</SelectItem>
+                            <SelectItem value="Partner">Partner</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.subscriberRelation && (
+                      <p className="text-red-500 text-sm mt-1">{errors.subscriberRelation.message}</p>
+                    )}
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-4">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
                   <FormField
-                    id="primaryInsuredName"
-                    label="Insured's Name (if different from patient)"
+                    id="primarySubscriberName"
+                    label="Subscriber's Name (if different from patient)"
                     register={register}
-                    error={errors.primaryInsuredName}
+                    error={errors.primarySubscriberName}
+                  />
+                  <FormField
+                    id="primarySubscriberDOB"
+                    label="Subscriber's DOB"
+                    type="date"
+                    register={register}
+                    error={errors.primarySubscriberDOB}
                   />
                   <FormField
                     id="subscriberID"
@@ -645,21 +661,49 @@ export default function IntakeForm() {
                         register={register}
                         error={errors.secondaryInsuranceID}
                       />
-                      <FormField
-                        id="secondaryInsuranceDOB"
-                        label="Insured's DOB"
-                        type="date"
-                        register={register}
-                        error={errors.secondaryInsuranceDOB}
-                      />
+                      <div>
+                        <Label className="block text-sm font-medium text-gray-700 mb-1">
+                          Subscriber is:
+                        </Label>
+                        <Controller
+                          control={control}
+                          name="secondarySubscriberRelation"
+                          render={({ field }) => (
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select relationship" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Self">Self</SelectItem>
+                                <SelectItem value="Parent">Parent</SelectItem>
+                                <SelectItem value="Child">Child</SelectItem>
+                                <SelectItem value="Partner">Partner</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {errors.secondarySubscriberRelation && (
+                          <p className="text-red-500 text-sm mt-1">{errors.secondarySubscriberRelation.message}</p>
+                        )}
+                      </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-4">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
                       <FormField
-                        id="secondaryInsuredName"
-                        label="Insured's Name (if different from patient)"
+                        id="secondarySubscriberName"
+                        label="Subscriber's Name (if different from patient)"
                         register={register}
-                        error={errors.secondaryInsuredName}
+                        error={errors.secondarySubscriberName}
+                      />
+                      <FormField
+                        id="secondarySubscriberDOB"
+                        label="Subscriber's DOB"
+                        type="date"
+                        register={register}
+                        error={errors.secondarySubscriberDOB}
                       />
                       <FormField
                         id="secondarySubscriberID"
@@ -674,162 +718,19 @@ export default function IntakeForm() {
 
               <Separator />
 
-              {/* Section 7-10: Medical History */}
+              {/* Section 7: Reasons for Seeking Therapy */}
               <div className="space-y-6">
-                <h2 className="text-xl font-medium text-gray-700">7. Medical Information</h2>
-                
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Are you currently under the care of a physician? <span className="text-red-500">*</span>
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="underPhysicianCare"
-                    render={({ field }) => (
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex space-x-6"
-                      >
-                        {["Yes", "No"].map((option) => (
-                          <div key={option} className="flex items-center">
-                            <RadioGroupItem id={`physician-care-${option}`} value={option} />
-                            <Label htmlFor={`physician-care-${option}`} className="ml-2">{option}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    )}
-                  />
-                  {errors.underPhysicianCare && (
-                    <p className="text-red-500 text-sm mt-1">{errors.underPhysicianCare.message}</p>
-                  )}
-                </div>
-
-                {watchUnderPhysicianCare === "Yes" && (
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <FormField
-                      id="physicianName"
-                      label="Physician's Name"
-                      register={register}
-                      error={errors.physicianName}
-                    />
-                    <FormField
-                      id="physicianCareReason"
-                      label="For what condition or issue?"
-                      register={register}
-                      error={errors.physicianCareReason}
-                    />
-                  </div>
-                )}
-
-                <div className="border border-gray-200 bg-gray-50 p-4 rounded-md mb-6">
-                  <h3 className="text-lg font-medium text-gray-700 mb-3">8. Psychiatric Advance Directive (PAD)</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    A PAD is a legal document that allows you to state your preferences for mental health treatment
-                    if you experience a mental health crisis in the future and are unable to make decisions.
-                  </p>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-1">
-                        Do you have a Psychiatric Advance Directive? <span className="text-red-500">*</span>
-                      </Label>
-                      <Controller
-                        control={control}
-                        name="hasPADDirective"
-                        render={({ field }) => (
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex space-x-6"
-                          >
-                            {["Yes", "No", "Not Sure"].map((option) => (
-                              <div key={option} className="flex items-center">
-                                <RadioGroupItem id={`pad-${option}`} value={option} />
-                                <Label htmlFor={`pad-${option}`} className="ml-2">{option}</Label>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                        )}
-                      />
-                      {errors.hasPADDirective && (
-                        <p className="text-red-500 text-sm mt-1">{errors.hasPADDirective.message}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-1">
-                        Do you understand what a PAD is?
-                      </Label>
-                      <Controller
-                        control={control}
-                        name="understandPAD"
-                        render={({ field }) => (
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex space-x-6"
-                          >
-                            {["Yes", "No", "Not Sure"].map((option) => (
-                              <div key={option} className="flex items-center">
-                                <RadioGroupItem id={`understand-pad-${option}`} value={option} />
-                                <Label htmlFor={`understand-pad-${option}`} className="ml-2">{option}</Label>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                        )}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-1">
-                        Would you like more information about PADs?
-                      </Label>
-                      <Controller
-                        control={control}
-                        name="wantPADInfo"
-                        render={({ field }) => (
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex space-x-6"
-                          >
-                            {["Yes", "No"].map((option) => (
-                              <div key={option} className="flex items-center">
-                                <RadioGroupItem id={`want-pad-info-${option}`} value={option} />
-                                <Label htmlFor={`want-pad-info-${option}`} className="ml-2">{option}</Label>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                        )}
-                      />
-                    </div>
-
-                    {watchHasPADDirective === "Yes" && (
-                      <FormField
-                        id="padDirectiveExplanation"
-                        label="Please provide details about your PAD"
-                        register={register}
-                        error={errors.padDirectiveExplanation}
-                        multiline
-                        rows={2}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-medium text-gray-700">9. Current Medications</h3>
+                <h2 className="text-xl font-medium text-gray-700">7. Reasons for Seeking Therapy</h2>
                 
                 <FormField
-                  id="medications"
-                  label="Current Medications (name/dosage/frequency/reason)"
+                  id="reasonForSeeking"
+                  label="Why are you seeking services?"
                   register={register}
-                  error={errors.medications}
+                  error={errors.reasonForSeeking}
                   multiline
                   rows={4}
+                  required
                 />
-
-                <h3 className="text-lg font-medium text-gray-700">10. Reasons for Seeking Therapy</h3>
                 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-3">
@@ -867,100 +768,9 @@ export default function IntakeForm() {
 
               <Separator />
 
-              {/* Section 11-13: Readiness and Past Counseling */}
+              {/* Section 8: Prior Counseling */}
               <div className="space-y-6">
-                <h2 className="text-xl font-medium text-gray-700">11. Therapy Goals</h2>
-                
-                <FormField
-                  id="therapyGoal"
-                  label="Please summarize what you hope to accomplish with therapy"
-                  register={register}
-                  error={errors.therapyGoal}
-                  multiline
-                  rows={4}
-                  required
-                />
-
-                <h3 className="text-lg font-medium text-gray-700">12. Motivational Scales</h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Please rate the following on a scale from 1 to 10 (1 = Low, 10 = High)
-                </p>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700 mb-2">
-                      How important is it for you to get help right now? <span className="text-red-500">*</span>
-                    </Label>
-                    <Controller
-                      control={control}
-                      name="motivationScales.importance"
-                      render={({ field }) => (
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex space-x-1 sm:space-x-2"
-                        >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                            <div key={num} className="flex flex-col items-center">
-                              <RadioGroupItem id={`importance-${num}`} value={num.toString()} />
-                              <Label htmlFor={`importance-${num}`} className="text-xs mt-1">{num}</Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      )}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700 mb-2">
-                      How confident are you in your ability to make changes? <span className="text-red-500">*</span>
-                    </Label>
-                    <Controller
-                      control={control}
-                      name="motivationScales.confidence"
-                      render={({ field }) => (
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex space-x-1 sm:space-x-2"
-                        >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                            <div key={num} className="flex flex-col items-center">
-                              <RadioGroupItem id={`confidence-${num}`} value={num.toString()} />
-                              <Label htmlFor={`confidence-${num}`} className="text-xs mt-1">{num}</Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      )}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700 mb-2">
-                      How ready are you to make these changes? <span className="text-red-500">*</span>
-                    </Label>
-                    <Controller
-                      control={control}
-                      name="motivationScales.readiness"
-                      render={({ field }) => (
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex space-x-1 sm:space-x-2"
-                        >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                            <div key={num} className="flex flex-col items-center">
-                              <RadioGroupItem id={`readiness-${num}`} value={num.toString()} />
-                              <Label htmlFor={`readiness-${num}`} className="text-xs mt-1">{num}</Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-medium text-gray-700">13. Prior Counseling</h3>
+                <h2 className="text-xl font-medium text-gray-700">8. Prior Counseling</h2>
                 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1038,9 +848,9 @@ export default function IntakeForm() {
 
               <Separator />
 
-              {/* Section 14: Signature */}
+              {/* Section 9: Signature */}
               <div className="space-y-4">
-                <h2 className="text-xl font-medium text-gray-700">14. Signature</h2>
+                <h2 className="text-xl font-medium text-gray-700">9. Signature</h2>
                 
                 <div className="border border-gray-200 bg-gray-50 p-4 rounded-md">
                   <p className="text-sm text-gray-700 mb-4">
