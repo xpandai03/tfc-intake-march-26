@@ -239,9 +239,6 @@ export default function IntakeForm() {
                   alt="Family Connection Clinic Logo" 
                   style={{display: 'block', margin: '0 auto', maxWidth: '280px', width: '100%', height: 'auto'}}
                 />
-                <h1 style={{marginTop: '1rem', fontSize: '24px', color: '#0A3B61', fontWeight: 'bold'}}>
-                  Internship Application
-                </h1>
               </div>
               <p className="text-gray-600 text-center mt-4">Please complete this form to request mental health services.</p>
             </div>
