@@ -233,8 +233,17 @@ export default function IntakeForm() {
         <Card className="shadow-md">
           <CardContent className="pt-6 pb-6">
             <div className="mb-8">
-              <h1 className="text-2xl font-semibold text-gray-800 mb-2">Request for Services</h1>
-              <p className="text-gray-600">Please complete this form to request mental health services.</p>
+              <div style={{textAlign: 'center', padding: '1rem 2rem'}}>
+                <img 
+                  src="https://media-hosting.imagekit.io/6cb73841e2af44a9/family-connection-logo.png?Expires=1838827813&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=vH1rgLH2MPTs1rUMOAgpfbygbFFZ1LoNAtOV8lPSsB1g0KuciqTCg3ZSUFHeQQM2pskuPn8uwR2xJzQ1Xo-hhvYUUgvsjRj-F1W6kMMmAi~N8LRkCPplp9IU80vjXN1WTX6sj3UakwP16tHZeF79S8VUdZXIaG9W8vJi3D9ruUiLhgdpV-~TVtYPHwu3cZpjO4obTylGaOSULUQm7WbnDHC~16nnoV92letBvx7fBzROvTQ3HmdAaoVrPCJeZjk~4X5FuuAzQXuRpRgGRc3ElN7xGFNy8trDduMvTUKHihax0d1x6IOn1iVc6fzLAoVVFphEfodiJqAokyXZYuZwAA__" 
+                  alt="Family Connection Clinic Logo" 
+                  style={{display: 'block', margin: '0 auto', maxWidth: '280px', width: '100%', height: 'auto'}}
+                />
+                <h1 style={{marginTop: '1rem', fontSize: '24px', color: '#0A3B61', fontWeight: 'bold'}}>
+                  Internship Application
+                </h1>
+              </div>
+              <p className="text-gray-600 text-center mt-4">Please complete this form to request mental health services.</p>
             </div>
 
             {submissionStatus.status !== "idle" && (
