@@ -551,6 +551,42 @@ export default function IntakeForm() {
 
               <Separator />
 
+              {/* Desired Modality */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-medium text-gray-700">Desired Modality</h2>
+                <div>
+                  <Label className="block text-sm font-medium text-gray-700 mb-1">
+                    Please select your desired modality <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="desiredModality"
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select modality" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Ind 18+">Individual (18+)</SelectItem>
+                          <SelectItem value="Ind Teen">Individual (Teen)</SelectItem>
+                          <SelectItem value="Ind Minor">Individual (Minor)</SelectItem>
+                          <SelectItem value="Couples">Couples</SelectItem>
+                          <SelectItem value="Minor">Minor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.desiredModality && (
+                    <p className="text-red-500 text-sm mt-1">{errors.desiredModality.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+
               {/* Section 4-6: Insurance Information */}
               <div className="space-y-6">
                 <h2 className="text-xl font-medium text-gray-700">4. Insurance Information</h2>
