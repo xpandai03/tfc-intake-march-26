@@ -27,7 +27,10 @@ const formSchema = z.object({
     required_error: "Please select who you are requesting services for",
   }),
   formCompletedBy: z.string().min(1, "This field is required"),
-  participantNames: z.array(z.object({ name: z.string() })).optional(),
+  participantNames: z.array(z.object({ 
+    name: z.string().min(1, "Participant name is required"),
+    dob: z.string().min(1, "Participant date of birth is required")
+  })).optional(),
   custodyType: z.enum(["Sole Custody", "Joint Custody", "CYFD Custody", "Other"]).optional(),
   
   // Section 2: Patient Information
@@ -69,6 +72,11 @@ const formSchema = z.object({
   secondarySubscriberName: z.string().optional(),
   secondarySubscriberDOB: z.string().optional(),
   secondarySubscriberID: z.string().optional(),
+  
+  // Desired Modality
+  desiredModality: z.enum(["Ind 18+", "Ind Teen", "Ind Minor", "Couples", "Minor"], {
+    required_error: "Please select a desired modality",
+  }),
   
   // Reasons for Seeking Services
   reasonsForTherapy: z.array(z.string()).min(1, "Please select at least one reason for therapy"),
@@ -146,6 +154,9 @@ export default function IntakeForm() {
       secondarySubscriberName: "",
       secondarySubscriberDOB: "",
       secondarySubscriberID: "",
+      
+      // Desired Modality
+      desiredModality: undefined,
       
       // Reasons for Seeking Services
       reasonsForTherapy: [],
@@ -315,30 +326,44 @@ export default function IntakeForm() {
                     
                     <div className="space-y-3">
                       {fields.map((field, index) => (
-                        <div key={field.id} className="flex items-center gap-2">
-                          <FormField
-                            id={`participantNames.${index}.name`}
-                            label={`Participant ${index + 1}`}
-                            register={register}
-                            error={errors.participantNames?.[index]?.name}
-                            required
-                          />
-                          <Button 
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="mt-5"
-                            onClick={() => remove(index)}
-                          >
-                            Remove
-                          </Button>
+                        <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3">
+                          <div className="sm:col-span-5">
+                            <FormField
+                              id={`participantNames.${index}.name`}
+                              label={`Participant ${index + 1}`}
+                              register={register}
+                              error={errors.participantNames?.[index]?.name}
+                              required
+                            />
+                          </div>
+                          <div className="sm:col-span-5">
+                            <FormField
+                              id={`participantNames.${index}.dob`}
+                              label="Date of Birth"
+                              type="date"
+                              register={register}
+                              error={errors.participantNames?.[index]?.dob}
+                              required
+                            />
+                          </div>
+                          <div className="sm:col-span-2 flex items-end">
+                            <Button 
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="mb-1 w-full"
+                              onClick={() => remove(index)}
+                            >
+                              Remove
+                            </Button>
+                          </div>
                         </div>
                       ))}
                       
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => append({ name: "" })}
+                        onClick={() => append({ name: "", dob: "" })}
                         className="mt-2"
                       >
                         Add Participant
