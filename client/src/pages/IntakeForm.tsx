@@ -667,32 +667,34 @@ export default function IntakeForm() {
                   </div>
                 </div>
                 
-                {watchSubscriberRelation !== "Self" && (
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
-                    <FormField
-                      id="primarySubscriberName"
-                      label="Subscriber's Name"
-                      register={register}
-                      error={errors.primarySubscriberName}
-                      required={watchSubscriberRelation !== "Self"}
-                    />
-                    <FormField
-                      id="primarySubscriberDOB"
-                      label="Subscriber's Date of Birth"
-                      type="date"
-                      register={register}
-                      error={errors.primarySubscriberDOB}
-                      required={watchSubscriberRelation !== "Self"}
-                    />
-                    <FormField
-                      id="subscriberID"
-                      label="Subscriber ID"
-                      register={register}
-                      error={errors.subscriberID}
-                      required
-                    />
-                  </div>
-                )}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
+                  {watchSubscriberRelation && watchSubscriberRelation !== "Self" ? (
+                    <>
+                      <FormField
+                        id="primarySubscriberName"
+                        label="Subscriber's Name"
+                        register={register}
+                        error={errors.primarySubscriberName}
+                        required
+                      />
+                      <FormField
+                        id="primarySubscriberDOB"
+                        label="Subscriber's Date of Birth"
+                        type="date"
+                        register={register}
+                        error={errors.primarySubscriberDOB}
+                        required
+                      />
+                    </>
+                  ) : null}
+                  <FormField
+                    id="subscriberID"
+                    label="Subscriber ID"
+                    register={register}
+                    error={errors.subscriberID}
+                    required
+                  />
+                </div>
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
@@ -765,24 +767,31 @@ export default function IntakeForm() {
                     </div>
                     
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
-                      <FormField
-                        id="secondarySubscriberName"
-                        label="Subscriber's Name (if different from patient)"
-                        register={register}
-                        error={errors.secondarySubscriberName}
-                      />
-                      <FormField
-                        id="secondarySubscriberDOB"
-                        label="Subscriber's DOB"
-                        type="date"
-                        register={register}
-                        error={errors.secondarySubscriberDOB}
-                      />
+                      {watchSecondarySubscriberRelation && watchSecondarySubscriberRelation !== "Self" ? (
+                        <>
+                          <FormField
+                            id="secondarySubscriberName"
+                            label="Subscriber's Name"
+                            register={register}
+                            error={errors.secondarySubscriberName}
+                            required
+                          />
+                          <FormField
+                            id="secondarySubscriberDOB"
+                            label="Subscriber's Date of Birth"
+                            type="date"
+                            register={register}
+                            error={errors.secondarySubscriberDOB}
+                            required
+                          />
+                        </>
+                      ) : null}
                       <FormField
                         id="secondarySubscriberID"
                         label="Subscriber ID"
                         register={register}
                         error={errors.secondarySubscriberID}
+                        required
                       />
                     </div>
                   </>
