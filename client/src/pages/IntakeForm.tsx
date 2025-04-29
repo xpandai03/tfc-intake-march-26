@@ -87,15 +87,7 @@ const formSchema = z.object({
   priorCounseling: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you've had prior counseling",
   }),
-  priorCounselingDetails: z.string().optional().superRefine((val, ctx) => {
-    const data = ctx.getData() as { priorCounseling?: string };
-    if (data.priorCounseling === "Yes" && (!val || val.trim() === "")) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please provide details about your prior counseling",
-      });
-    }
-  }),
+  priorCounselingDetails: z.string().optional(),
   
   // Signature
   initials: z.string().min(1, "Initials are required"),
@@ -189,6 +181,8 @@ export default function IntakeForm() {
   const watchServiceRequestType = watch("serviceRequestType" as const);
   const watchHasSecondaryInsurance = watch("hasSecondaryInsurance" as const);
   const watchPriorCounseling = watch("priorCounseling" as const);
+  const watchSubscriberRelation = watch("subscriberRelation" as const);
+  const watchSecondarySubscriberRelation = watch("secondarySubscriberRelation" as const);
 
   // Therapy reasons checkbox options
   const therapyReasons = [
@@ -673,28 +667,32 @@ export default function IntakeForm() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
-                  <FormField
-                    id="primarySubscriberName"
-                    label="Subscriber's Name (if different from patient)"
-                    register={register}
-                    error={errors.primarySubscriberName}
-                  />
-                  <FormField
-                    id="primarySubscriberDOB"
-                    label="Subscriber's DOB"
-                    type="date"
-                    register={register}
-                    error={errors.primarySubscriberDOB}
-                  />
-                  <FormField
-                    id="subscriberID"
-                    label="Subscriber ID"
-                    register={register}
-                    error={errors.subscriberID}
-                    required
-                  />
-                </div>
+                {watchSubscriberRelation !== "Self" && (
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
+                    <FormField
+                      id="primarySubscriberName"
+                      label="Subscriber's Name"
+                      register={register}
+                      error={errors.primarySubscriberName}
+                      required={watchSubscriberRelation !== "Self"}
+                    />
+                    <FormField
+                      id="primarySubscriberDOB"
+                      label="Subscriber's Date of Birth"
+                      type="date"
+                      register={register}
+                      error={errors.primarySubscriberDOB}
+                      required={watchSubscriberRelation !== "Self"}
+                    />
+                    <FormField
+                      id="subscriberID"
+                      label="Subscriber ID"
+                      register={register}
+                      error={errors.subscriberID}
+                      required
+                    />
+                  </div>
+                )}
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
@@ -798,10 +796,10 @@ export default function IntakeForm() {
                 <h2 className="text-xl font-medium text-gray-700">7. Reasons for Seeking Therapy</h2>
                 
                 <FormField
-                  id="reasonForSeeking"
+                  id="reasonForSeekingServices"
                   label="Why are you seeking services?"
                   register={register}
-                  error={errors.reasonForSeeking}
+                  error={errors.reasonForSeekingServices}
                   multiline
                   rows={4}
                   required
