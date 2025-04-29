@@ -81,14 +81,21 @@ const formSchema = z.object({
   // Reasons for Seeking Services
   reasonsForTherapy: z.array(z.string()).min(1, "Please select at least one reason for therapy"),
   reasonForSeeking: z.string().min(1, "Please explain why you are seeking services"),
+  reasonForSeekingServices: z.string().min(1, "Please explain why you are seeking services"),
   
   // Prior Counseling
   priorCounseling: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you've had prior counseling",
   }),
-  priorCounselingByWhom: z.string().optional(),
-  priorCounselingWhere: z.string().optional(),
-  priorCounselingOutcome: z.string().optional(),
+  priorCounselingDetails: z.string().optional().superRefine((val, ctx) => {
+    const data = ctx.getData() as { priorCounseling?: string };
+    if (data.priorCounseling === "Yes" && (!val || val.trim() === "")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please provide details about your prior counseling",
+      });
+    }
+  }),
   
   // Signature
   initials: z.string().min(1, "Initials are required"),
@@ -161,12 +168,11 @@ export default function IntakeForm() {
       // Reasons for Seeking Services
       reasonsForTherapy: [],
       reasonForSeeking: "",
+      reasonForSeekingServices: "",
       
       // Prior Counseling
       priorCounseling: undefined,
-      priorCounselingByWhom: "",
-      priorCounselingWhere: "",
-      priorCounselingOutcome: "",
+      priorCounselingDetails: "",
       
       // Signature
       initials: "",
@@ -869,48 +875,16 @@ export default function IntakeForm() {
                 </div>
 
                 {watchPriorCounseling === "Yes" && (
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                  <div className="mt-4">
                     <FormField
-                      id="priorCounselingByWhom"
-                      label="Who did you see?"
+                      id="priorCounselingDetails"
+                      label="When and with whom? (Please provide details)"
                       register={register}
-                      error={errors.priorCounselingByWhom}
+                      error={errors.priorCounselingDetails}
+                      multiline={true}
+                      rows={3}
+                      required={watchPriorCounseling === "Yes"}
                     />
-                    <FormField
-                      id="priorCounselingWhere"
-                      label="Where?"
-                      register={register}
-                      error={errors.priorCounselingWhere}
-                    />
-                    <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-1">
-                        Outcome
-                      </Label>
-                      <Controller
-                        control={control}
-                        name="priorCounselingOutcome"
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select an outcome" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Successful">Successful</SelectItem>
-                              <SelectItem value="Somewhat helpful">Somewhat helpful</SelectItem>
-                              <SelectItem value="Not helpful">Not helpful</SelectItem>
-                              <SelectItem value="Incomplete">Incomplete</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      {errors.priorCounselingOutcome && (
-                        <p className="text-red-500 text-sm mt-1">{errors.priorCounselingOutcome.message}</p>
-                      )}
-                    </div>
                   </div>
                 )}
               </div>
