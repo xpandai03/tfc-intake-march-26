@@ -80,7 +80,6 @@ const formSchema = z.object({
   
   // Reasons for Seeking Services
   reasonsForTherapy: z.array(z.string()).min(1, "Please select at least one reason for therapy"),
-  reasonForSeeking: z.string().min(1, "Please explain why you are seeking services"),
   reasonForSeekingServices: z.string().min(1, "Please explain why you are seeking services"),
   
   // Prior Counseling
@@ -159,7 +158,6 @@ export default function IntakeForm() {
       
       // Reasons for Seeking Services
       reasonsForTherapy: [],
-      reasonForSeeking: "",
       reasonForSeekingServices: "",
       
       // Prior Counseling
@@ -207,6 +205,7 @@ export default function IntakeForm() {
 
   const onSubmit = async (data: FormValues) => {
     try {
+      console.log("Form validation errors:", Object.keys(errors).length > 0 ? errors : "No errors");
       console.log("Submitting data:", data); // Temporary log for debugging
       
       await axios.post(
