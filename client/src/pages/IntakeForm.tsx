@@ -204,10 +204,12 @@ export default function IntakeForm() {
   ];
 
   const onSubmit = async (data: FormValues) => {
+    console.log("onSubmit function called");
     try {
       console.log("Form validation errors:", Object.keys(errors).length > 0 ? errors : "No errors");
       console.log("Submitting data:", data); // Temporary log for debugging
       
+      console.log("Sending POST request to Azure webhook URL...");
       await axios.post(
         "https://prod-187.westus.logic.azure.com:443/workflows/783efb077f0041b59cfa677b1dedcac3/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=vx5yn2DfZ731OFDWTdPlOPNmDv0qaXRpnyJheORXx48",
         data,
@@ -226,10 +228,19 @@ export default function IntakeForm() {
       window.scrollTo(0, 0);
       reset();
     } catch (error) {
+      console.log("Error caught in form submission:", error);
       let errorMessage = "Sorry, there was an error submitting your form. Please try again.";
       
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (axios.isAxiosError(error)) {
+        console.log("Axios error details:", {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data
+        });
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
       }
       
       setSubmissionStatus({
@@ -264,7 +275,13 @@ export default function IntakeForm() {
               />
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <form 
+              onSubmit={(e) => {
+                console.log("Form onSubmit event triggered");
+                handleSubmit(onSubmit)(e);
+              }} 
+              className="space-y-8"
+            >
               {/* Section 1: Service Request Type */}
               <div className="space-y-4">
                 <h2 className="text-xl font-medium text-gray-700">1. I am requesting services for:</h2>
