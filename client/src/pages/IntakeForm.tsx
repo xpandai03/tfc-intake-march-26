@@ -29,7 +29,9 @@ const formSchema = z.object({
   formCompletedBy: z.string().min(1, "This field is required"),
   participantNames: z.array(z.object({ 
     name: z.string().min(1, "Participant name is required"),
-    dob: z.string().min(1, "Participant date of birth is required")
+    dob: z.string().min(1, "Participant date of birth is required"),
+    email: z.string().email("Please enter a valid email").optional(),
+    phoneNumber: z.string().optional()
   })).optional(),
   custodyType: z.enum(["Sole Custody", "Joint Custody", "CYFD Custody", "Other"]).optional(),
   
@@ -355,35 +357,59 @@ export default function IntakeForm() {
                     
                     <div className="space-y-3">
                       {fields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3">
-                          <div className="sm:col-span-5">
-                            <FormField
-                              id={`participantNames.${index}.name`}
-                              label={`Participant ${index + 1}`}
-                              register={register}
-                              error={errors.participantNames?.[index]?.name}
-                              required
-                            />
+                        <div key={field.id} className="border border-gray-200 rounded-md p-4 mb-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3">
+                            <div className="sm:col-span-6">
+                              <FormField
+                                id={`participantNames.${index}.name`}
+                                label={`Participant ${index + 1}`}
+                                register={register}
+                                error={errors.participantNames?.[index]?.name}
+                                required
+                              />
+                            </div>
+                            <div className="sm:col-span-6">
+                              <FormField
+                                id={`participantNames.${index}.dob`}
+                                label="Date of Birth"
+                                type="date"
+                                register={register}
+                                error={errors.participantNames?.[index]?.dob}
+                                required
+                              />
+                            </div>
                           </div>
-                          <div className="sm:col-span-5">
-                            <FormField
-                              id={`participantNames.${index}.dob`}
-                              label="Date of Birth"
-                              type="date"
-                              register={register}
-                              error={errors.participantNames?.[index]?.dob}
-                              required
-                            />
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3">
+                            <div className="sm:col-span-6">
+                              <FormField
+                                id={`participantNames.${index}.email`}
+                                label="Email"
+                                type="email"
+                                register={register}
+                                error={errors.participantNames?.[index]?.email}
+                              />
+                            </div>
+                            <div className="sm:col-span-6">
+                              <FormField
+                                id={`participantNames.${index}.phoneNumber`}
+                                label="Phone Number"
+                                type="tel"
+                                register={register}
+                                error={errors.participantNames?.[index]?.phoneNumber}
+                              />
+                            </div>
                           </div>
-                          <div className="sm:col-span-2 flex items-end">
+                          
+                          <div className="flex justify-end">
                             <Button 
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="mb-1 w-full"
                               onClick={() => remove(index)}
+                              className="text-red-600"
                             >
-                              Remove
+                              Remove Participant
                             </Button>
                           </div>
                         </div>
@@ -392,7 +418,7 @@ export default function IntakeForm() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => append({ name: "", dob: "" })}
+                        onClick={() => append({ name: "", dob: "", email: "", phoneNumber: "" })}
                         className="mt-2"
                       >
                         Add Participant
