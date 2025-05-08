@@ -87,6 +87,10 @@ const formSchema = z.object({
     required_error: "Please indicate if you've had prior counseling",
   }),
   priorCounselingDetails: z.string().optional(),
+  whoTheySawBefore: z.string().optional(),
+  wasAtTFC: z.boolean().optional(),
+  providerRequested: z.string().optional(),
+  priorOutcome: z.enum(["Successful", "Somewhat helpful", "Not helpful", "Incomplete", "Other"]).optional(),
   
   // Signature
   initials: z.string().min(1, "Initials are required"),
@@ -163,6 +167,10 @@ export default function IntakeForm() {
       // Prior Counseling
       priorCounseling: undefined,
       priorCounselingDetails: "",
+      whoTheySawBefore: "",
+      wasAtTFC: false,
+      providerRequested: "",
+      priorOutcome: undefined,
       
       // Signature
       initials: "",
@@ -254,11 +262,11 @@ export default function IntakeForm() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:py-12">
+      <div className="max-w-4xl mx-auto py-4 px-4 sm:px-6 lg:py-6">
         <Card className="shadow-md">
           <CardContent className="pt-6 pb-6">
             <div className="mb-8">
-              <div style={{textAlign: 'center', padding: '1rem 2rem'}}>
+              <div style={{textAlign: 'center', padding: '0.5rem 2rem'}}>
                 <img 
                   src="https://media-hosting.imagekit.io/6cb73841e2af44a9/family-connection-logo.png?Expires=1838827813&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=vH1rgLH2MPTs1rUMOAgpfbygbFFZ1LoNAtOV8lPSsB1g0KuciqTCg3ZSUFHeQQM2pskuPn8uwR2xJzQ1Xo-hhvYUUgvsjRj-F1W6kMMmAi~N8LRkCPplp9IU80vjXN1WTX6sj3UakwP16tHZeF79S8VUdZXIaG9W8vJi3D9ruUiLhgdpV-~TVtYPHwu3cZpjO4obTylGaOSULUQm7WbnDHC~16nnoV92letBvx7fBzROvTQ3HmdAaoVrPCJeZjk~4X5FuuAzQXuRpRgGRc3ElN7xGFNy8trDduMvTUKHihax0d1x6IOn1iVc6fzLAoVVFphEfodiJqAokyXZYuZwAA__" 
                   alt="Family Connection Clinic Logo" 
@@ -902,7 +910,7 @@ export default function IntakeForm() {
                 </div>
 
                 {watchPriorCounseling === "Yes" && (
-                  <div className="mt-4">
+                  <div className="mt-4 space-y-4">
                     <FormField
                       id="priorCounselingDetails"
                       label="When and with whom? (Please provide details)"
@@ -912,6 +920,75 @@ export default function IntakeForm() {
                       rows={3}
                       required={watchPriorCounseling === "Yes"}
                     />
+                    
+                    <FormField
+                      id="whoTheySawBefore"
+                      label="Who did you receive services with before?"
+                      register={register}
+                      error={errors.whoTheySawBefore}
+                    />
+                    
+                    <div className="space-y-3">
+                      <Controller
+                        control={control}
+                        name="wasAtTFC"
+                        render={({ field }) => (
+                          <div className="flex items-start">
+                            <div className="flex items-center h-5">
+                              <Checkbox
+                                id="wasAtTFC"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </div>
+                            <div className="ml-3 text-sm">
+                              <Label htmlFor="wasAtTFC" className="text-gray-700">
+                                Was this at TFC?
+                              </Label>
+                            </div>
+                          </div>
+                        )}
+                      />
+                      
+                      {watch("wasAtTFC") && (
+                        <FormField
+                          id="providerRequested"
+                          label="If yes, who?"
+                          register={register}
+                          error={errors.providerRequested}
+                        />
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label className="block text-sm font-medium text-gray-700 mb-1">
+                        Outcome of previous services
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="priorOutcome"
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select outcome" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Successful">Successful</SelectItem>
+                              <SelectItem value="Somewhat helpful">Somewhat helpful</SelectItem>
+                              <SelectItem value="Not helpful">Not helpful</SelectItem>
+                              <SelectItem value="Incomplete">Incomplete</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {errors.priorOutcome && (
+                        <p className="text-red-500 text-sm mt-1">{errors.priorOutcome.message}</p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
