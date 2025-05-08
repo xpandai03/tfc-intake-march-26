@@ -189,6 +189,7 @@ export default function IntakeForm() {
   const watchPriorCounseling = watch("priorCounseling" as const);
   const watchSubscriberRelation = watch("subscriberRelation" as const);
   const watchSecondarySubscriberRelation = watch("secondarySubscriberRelation" as const);
+  const watchWasAtTFC = watch("wasAtTFC" as const);
 
   // Therapy reasons checkbox options
   const therapyReasons = [
@@ -950,7 +951,7 @@ export default function IntakeForm() {
                         )}
                       />
                       
-                      {watch("wasAtTFC") && (
+                      {watchWasAtTFC && (
                         <FormField
                           id="providerRequested"
                           label="If yes, who?"
