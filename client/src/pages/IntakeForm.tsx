@@ -36,11 +36,12 @@ const formSchema = z.object({
   custodyType: z.enum(["Sole Custody", "Joint Custody", "CYFD Custody", "Other"]).optional(),
   
   // Section 2: Patient Information
-  fullName: z.string().min(1, "Full name is required"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   preferredName: z.string().optional(),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
-  genderAtBirth: z.enum(["Male", "Female", "Other"], {
-    required_error: "Please select gender at birth",
+  sex: z.enum(["Male", "Female", "Other"], {
+    required_error: "Please select sex",
   }),
   genderIdentity: z.string().optional(),
   street: z.string().min(1, "Street address is required"),
@@ -128,10 +129,11 @@ export default function IntakeForm() {
       custodyType: undefined,
       
       // Section 2: Patient Information
-      fullName: "",
+      firstName: "",
+      lastName: "",
       preferredName: "",
       dateOfBirth: "",
-      genderAtBirth: undefined,
+      sex: undefined,
       genderIdentity: "",
       street: "",
       apt: "",
@@ -450,19 +452,27 @@ export default function IntakeForm() {
                 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <FormField
-                    id="fullName"
-                    label="Full Name"
+                    id="firstName"
+                    label="First Name"
                     register={register}
-                    error={errors.fullName}
+                    error={errors.firstName}
                     required
                   />
                   <FormField
-                    id="preferredName"
-                    label="Preferred Name"
+                    id="lastName"
+                    label="Last Name"
                     register={register}
-                    error={errors.preferredName}
+                    error={errors.lastName}
+                    required
                   />
                 </div>
+                
+                <FormField
+                  id="preferredName"
+                  label="Preferred Name"
+                  register={register}
+                  error={errors.preferredName}
+                />
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <FormField
@@ -476,11 +486,11 @@ export default function IntakeForm() {
                   
                   <div className="sm:col-span-2">
                     <Label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gender at Birth <span className="text-red-500">*</span>
+                      Sex <span className="text-red-500">*</span>
                     </Label>
                     <Controller
                       control={control}
-                      name="genderAtBirth"
+                      name="sex"
                       render={({ field }) => (
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -489,22 +499,22 @@ export default function IntakeForm() {
                         >
                           {["Male", "Female", "Other"].map((option) => (
                             <div key={option} className="flex items-center">
-                              <RadioGroupItem id={`gender-${option}`} value={option} />
-                              <Label htmlFor={`gender-${option}`} className="ml-2">{option}</Label>
+                              <RadioGroupItem id={`sex-${option}`} value={option} />
+                              <Label htmlFor={`sex-${option}`} className="ml-2">{option}</Label>
                             </div>
                           ))}
                         </RadioGroup>
                       )}
                     />
-                    {errors.genderAtBirth && (
-                      <p className="text-red-500 text-sm mt-1">{errors.genderAtBirth.message}</p>
+                    {errors.sex && (
+                      <p className="text-red-500 text-sm mt-1">{errors.sex.message}</p>
                     )}
                   </div>
                 </div>
 
                 <FormField
                   id="genderIdentity"
-                  label="Gender Identity (if different from above)"
+                  label="Gender Identity (if different from sex assigned at birth)"
                   register={register}
                   error={errors.genderIdentity}
                 />
