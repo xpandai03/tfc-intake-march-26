@@ -19,6 +19,7 @@ import FormField from "@/components/FormField";
 import SubmitButton from "@/components/SubmitButton";
 import FormResponse from "@/components/FormResponse";
 import axios from "axios";
+import tfcLogoPath from "@assets/TFC Logo color (3)_1754422698445.jpg";
 
 // Form validation schema
 const formSchema = z.object({
@@ -271,12 +272,21 @@ export default function IntakeForm() {
         <Card className="shadow-md">
           <CardContent className="pt-6 pb-6">
             <div className="mb-8">
-              <div className="text-center py-2 px-8">
+              <div className="text-center py-4 px-4">
                 <img 
-                  src="/tfc-logo.jpg"
+                  src={tfcLogoPath}
                   alt="The Family Connection - Changing Mental Health" 
-                  className="mx-auto block w-full h-auto"
-                  style={{ maxWidth: '350px' }}
+                  className="mx-auto block w-full h-auto max-w-sm sm:max-w-md md:max-w-lg"
+                  style={{ 
+                    maxWidth: '350px',
+                    minHeight: '60px',
+                    objectFit: 'contain'
+                  }}
+                  onError={(e) => {
+                    console.error('Logo failed to load:', e);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                  onLoad={() => console.log('Logo loaded successfully')}
                 />
               </div>
               <p className="text-gray-600 text-center mt-4">Please complete this form to request mental health services.</p>
