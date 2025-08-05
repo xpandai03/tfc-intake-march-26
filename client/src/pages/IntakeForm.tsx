@@ -272,44 +272,12 @@ export default function IntakeForm() {
           <CardContent className="pt-6 pb-6">
             <div className="mb-8">
               <div className="text-center py-2 px-8">
-                <svg 
-                  viewBox="0 0 400 100" 
-                  className="mx-auto max-w-xs w-full h-auto"
-                  style={{ maxWidth: '280px' }}
-                >
-                  {/* Background circle for logo mark */}
-                  <circle cx="50" cy="50" r="35" fill="#2563eb" opacity="0.1"/>
-                  
-                  {/* Family icon - simplified figures */}
-                  <g fill="#2563eb">
-                    {/* Adult figure 1 */}
-                    <circle cx="35" cy="35" r="6"/>
-                    <rect x="32" y="42" width="6" height="15" rx="3"/>
-                    
-                    {/* Adult figure 2 */}
-                    <circle cx="50" cy="35" r="6"/>
-                    <rect x="47" y="42" width="6" height="15" rx="3"/>
-                    
-                    {/* Child figure */}
-                    <circle cx="65" cy="40" r="4"/>
-                    <rect x="63" y="45" width="4" height="10" rx="2"/>
-                    
-                    {/* Connection lines */}
-                    <path d="M35 50 Q42 47 50 50" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
-                    <path d="M50 50 Q57 47 65 50" stroke="#2563eb" strokeWidth="1.5" fill="none"/>
-                  </g>
-                  
-                  {/* Company name */}
-                  <text x="110" y="35" fontFamily="system-ui, sans-serif" fontSize="18" fontWeight="600" fill="#1f2937">
-                    Family Connection
-                  </text>
-                  <text x="110" y="55" fontFamily="system-ui, sans-serif" fontSize="16" fontWeight="400" fill="#4b5563">
-                    Clinic
-                  </text>
-                  
-                  {/* Decorative line */}
-                  <line x1="110" y1="62" x2="280" y2="62" stroke="#e5e7eb" strokeWidth="1"/>
-                </svg>
+                <img 
+                  src="/tfc-logo.jpg"
+                  alt="The Family Connection - Changing Mental Health" 
+                  className="mx-auto block w-full h-auto"
+                  style={{ maxWidth: '350px' }}
+                />
               </div>
               <p className="text-gray-600 text-center mt-4">Please complete this form to request mental health services.</p>
             </div>
