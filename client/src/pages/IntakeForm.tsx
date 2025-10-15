@@ -1049,10 +1049,7 @@ export default function IntakeForm() {
                 
                 <div className="border border-gray-200 bg-gray-50 p-4 rounded-md">
                   <p className="text-sm text-gray-700 mb-4">
-                    By typing my initials below and checking the confirmation box, I acknowledge that I understand this 
-                    is a request for services. Submitting this form does not guarantee services, and I understand that 
-                    someone will contact me to discuss next steps. I confirm that the information I have provided is 
-                    accurate and complete to the best of my knowledge.
+                    By typing my initials below and checking the confirmation box, I acknowledge that I understand this form is a request for services and does not guarantee an appointment. I understand that my submission places me on a waitlist and that someone from The Family Connection will contact me once a provider becomes available to discuss next steps. Specific appointment times are not guaranteed and may vary depending on provider availability. If I have any questions, I will contact the office at (575) 323-7979. I confirm that the information I have provided is accurate and complete to the best of my knowledge.
                   </p>
                   
                   <FormField
