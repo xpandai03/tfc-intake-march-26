@@ -209,7 +209,7 @@ export default function IntakeForm() {
 
   // Insurance types
   const insuranceTypes = [
-    "Private Pay", "Commercial Insurance", "Medicaid", "EAP"
+    "Private Pay", "Commercial Insurance", "Medicaid", "Medicare", "EAP"
   ];
   
   // Counseling types
