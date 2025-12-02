@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import moment from "moment-timezone";
+
 import { z } from "zod";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,7 +37,10 @@ const getDateString = () => {
       hour12: true,
     });
 
-    return formattedDate;
+    var tzName = moment.tz.guess();
+    var abbr = moment.tz(tzName).zoneAbbr();
+    console.log(abbr);
+    return `${formattedDate} - ${abbr}`;
   } catch (error) {
     console.error("Error formatting date:", error);
     return "";
