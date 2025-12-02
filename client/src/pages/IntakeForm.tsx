@@ -21,21 +21,50 @@ import FormResponse from "@/components/FormResponse";
 import axios from "axios";
 import tfcLogoPath from "@assets/TFC Logo color (3)_1754422698445.jpg";
 
+const getDateString = () => {
+  try {
+    const date = new Date();
+
+    const formattedDate = date.toLocaleString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
+    return formattedDate;
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "";
+  }
+};
 // Form validation schema
 const formSchema = z.object({
   // Section 1: Requesting Services For
-  serviceRequestType: z.enum(["My Child", "Myself", "My Family", "My Partner & Myself"], {
-    required_error: "Please select who you are requesting services for",
-  }),
+  serviceRequestType: z.enum(
+    ["My Child", "Myself", "My Family", "My Partner & Myself"],
+    {
+      required_error: "Please select who you are requesting services for",
+    },
+  ),
   formCompletedBy: z.string().min(1, "This field is required"),
-  participantNames: z.array(z.object({ 
-    name: z.string().min(1, "Participant name is required"),
-    dob: z.string().min(1, "Participant date of birth is required"),
-    email: z.string().email("Please enter a valid email").optional(),
-    phoneNumber: z.string().optional()
-  })).optional(),
-  custodyType: z.enum(["Sole Custody", "Joint Custody", "CYFD Custody", "Other"]).optional(),
-  
+  participantNames: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Participant name is required"),
+        dob: z.string().min(1, "Participant date of birth is required"),
+        email: z.string().email("Please enter a valid email").optional(),
+        phoneNumber: z.string().optional(),
+      }),
+    )
+    .optional(),
+  custodyType: z
+    .enum(["Sole Custody", "Joint Custody", "CYFD Custody", "Other"])
+    .optional(),
+
   // Section 2: Patient Information
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -56,10 +85,12 @@ const formSchema = z.object({
   consentToEmail: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you consent to email",
   }),
-  
+
   // Section 3: Insurance Information
-  insuranceType: z.array(z.string()).min(1, "Select at least one insurance type"),
-  
+  insuranceType: z
+    .array(z.string())
+    .min(1, "Select at least one insurance type"),
+
   // Primary Insurance
   primaryInsurance: z.string().optional(),
   primaryInsuranceID: z.string().optional(),
@@ -67,25 +98,31 @@ const formSchema = z.object({
   primarySubscriberName: z.string().optional(),
   primarySubscriberDOB: z.string().optional(),
   subscriberID: z.string().optional(),
-  
+
   // Secondary Insurance
   hasSecondaryInsurance: z.enum(["Yes", "No"]).optional(),
   secondaryInsurance: z.string().optional(),
   secondaryInsuranceID: z.string().optional(),
-  secondarySubscriberRelation: z.enum(["Self", "Parent", "Child", "Partner"]).optional(),
+  secondarySubscriberRelation: z
+    .enum(["Self", "Parent", "Child", "Partner"])
+    .optional(),
   secondarySubscriberName: z.string().optional(),
   secondarySubscriberDOB: z.string().optional(),
   secondarySubscriberID: z.string().optional(),
-  
+
   // Desired Modality
   desiredModality: z.enum(["In Person", "Telehealth", "Hybrid"], {
     required_error: "Please select a desired modality",
   }),
-  
+
   // Reasons for Seeking Services
-  reasonsForTherapy: z.array(z.string()).min(1, "Please select at least one reason for therapy"),
-  reasonForSeekingServices: z.string().min(1, "Please explain why you are seeking services"),
-  
+  reasonsForTherapy: z
+    .array(z.string())
+    .min(1, "Please select at least one reason for therapy"),
+  reasonForSeekingServices: z
+    .string()
+    .min(1, "Please explain why you are seeking services"),
+
   // Prior Counseling
   priorCounseling: z.enum(["Yes", "No"], {
     required_error: "Please indicate if you've had prior counseling",
@@ -94,11 +131,19 @@ const formSchema = z.object({
   whoTheySawBefore: z.string().optional(),
   wasAtTFC: z.boolean().optional(),
   providerRequested: z.string().optional(),
-  priorOutcome: z.enum(["Successful", "Somewhat helpful", "Not helpful", "Incomplete", "Other"]).optional(),
-  
+  priorOutcome: z
+    .enum([
+      "Successful",
+      "Somewhat helpful",
+      "Not helpful",
+      "Incomplete",
+      "Other",
+    ])
+    .optional(),
+
   // Signature
   initials: z.string().min(1, "Initials are required"),
-  confirmAccuracy: z.boolean().refine(val => val === true, {
+  confirmAccuracy: z.boolean().refine((val) => val === true, {
     message: "You must confirm the accuracy of the information",
   }),
 });
@@ -128,7 +173,7 @@ export default function IntakeForm() {
       formCompletedBy: "",
       participantNames: [],
       custodyType: undefined,
-      
+
       // Section 2: Patient Information
       firstName: "",
       lastName: "",
@@ -145,7 +190,7 @@ export default function IntakeForm() {
       mobilePhone: "",
       email: "",
       consentToEmail: undefined,
-      
+
       // Section 3: Insurance Information
       insuranceType: [],
       primaryInsurance: "",
@@ -161,14 +206,14 @@ export default function IntakeForm() {
       secondarySubscriberName: "",
       secondarySubscriberDOB: "",
       secondarySubscriberID: "",
-      
+
       // Desired Modality
       desiredModality: undefined,
-      
+
       // Reasons for Seeking Services
       reasonsForTherapy: [],
       reasonForSeekingServices: "",
-      
+
       // Prior Counseling
       priorCounseling: undefined,
       priorCounselingDetails: "",
@@ -176,7 +221,7 @@ export default function IntakeForm() {
       wasAtTFC: false,
       providerRequested: "",
       priorOutcome: undefined,
-      
+
       // Signature
       initials: "",
       confirmAccuracy: false,
@@ -187,53 +232,78 @@ export default function IntakeForm() {
     control,
     name: "participantNames",
   });
-  
+
   // Watch for form field changes
   const watchServiceRequestType = watch("serviceRequestType" as const);
   const watchHasSecondaryInsurance = watch("hasSecondaryInsurance" as const);
   const watchPriorCounseling = watch("priorCounseling" as const);
   const watchSubscriberRelation = watch("subscriberRelation" as const);
-  const watchSecondarySubscriberRelation = watch("secondarySubscriberRelation" as const);
+  const watchSecondarySubscriberRelation = watch(
+    "secondarySubscriberRelation" as const,
+  );
   const watchWasAtTFC = watch("wasAtTFC" as const);
 
   // Therapy reasons checkbox options
   const therapyReasons = [
-    "Depression", "Anxiety", "Relationship Issues", "Grief/Loss", 
-    "Trauma", "Stress", "Self-esteem", "Anger Management",
-    "Family Conflict", "Life Transitions", "Career Challenges", "Addiction",
-    "Eating Disorders", "OCD", "PTSD", "Bipolar Disorder",
-    "Parenting Issues", "Communication Problems", "Sexual Problems",
-    "Chronic Pain", "Identity Issues", "Suicidal Thoughts",
-    "Sleep Problems", "Work Stress", "Financial Stress"
+    "Depression",
+    "Anxiety",
+    "Relationship Issues",
+    "Grief/Loss",
+    "Trauma",
+    "Stress",
+    "Self-esteem",
+    "Anger Management",
+    "Family Conflict",
+    "Life Transitions",
+    "Career Challenges",
+    "Addiction",
+    "Eating Disorders",
+    "OCD",
+    "PTSD",
+    "Bipolar Disorder",
+    "Parenting Issues",
+    "Communication Problems",
+    "Sexual Problems",
+    "Chronic Pain",
+    "Identity Issues",
+    "Suicidal Thoughts",
+    "Sleep Problems",
+    "Work Stress",
+    "Financial Stress",
   ];
 
   // Insurance types
   const insuranceTypes = [
-    "Private Pay", "Commercial Insurance", "Medicaid", "Medicare", "EAP"
+    "Private Pay",
+    "Commercial Insurance",
+    "Medicaid",
+    "Medicare",
+    "EAP",
   ];
-  
+
   // Counseling types
-  const counselingTypes = [
-    "Inpatient", "Outpatient"
-  ];
+  const counselingTypes = ["Inpatient", "Outpatient"];
 
   const onSubmit = async (data: FormValues) => {
     console.log("onSubmit function called");
     try {
-      console.log("Form validation errors:", Object.keys(errors).length > 0 ? errors : "No errors");
+      console.log(
+        "Form validation errors:",
+        Object.keys(errors).length > 0 ? errors : "No errors",
+      );
       console.log("Submitting data:", data); // Temporary log for debugging
-      
+
       console.log("Sending POST request to Azure webhook URL...");
       await axios.post(
         "https://prod-187.westus.logic.azure.com:443/workflows/783efb077f0041b59cfa677b1dedcac3/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=vx5yn2DfZ731OFDWTdPlOPNmDv0qaXRpnyJheORXx48",
-        data,
+        { ...data, formSubmittedAt: getDateString() },
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+            "Content-Type": "application/json",
+          },
+        },
       );
-      
+
       // Set success feedback
       setSubmissionStatus({
         status: "success",
@@ -243,20 +313,21 @@ export default function IntakeForm() {
       reset();
     } catch (error) {
       console.log("Error caught in form submission:", error);
-      let errorMessage = "Sorry, there was an error submitting your form. Please try again.";
-      
+      let errorMessage =
+        "Sorry, there was an error submitting your form. Please try again.";
+
       if (axios.isAxiosError(error)) {
         console.log("Axios error details:", {
           status: error.response?.status,
           statusText: error.response?.statusText,
-          data: error.response?.data
+          data: error.response?.data,
         });
-        
+
         if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         }
       }
-      
+
       setSubmissionStatus({
         status: "error",
         message: errorMessage,
@@ -273,23 +344,25 @@ export default function IntakeForm() {
           <CardContent className="pt-6 pb-6">
             <div className="mb-8">
               <div className="text-center py-4 px-4">
-                <img 
+                <img
                   src={tfcLogoPath}
-                  alt="The Family Connection - Changing Mental Health" 
+                  alt="The Family Connection - Changing Mental Health"
                   className="mx-auto block w-full h-auto max-w-sm sm:max-w-md md:max-w-lg"
-                  style={{ 
-                    maxWidth: '350px',
-                    minHeight: '60px',
-                    objectFit: 'contain'
+                  style={{
+                    maxWidth: "350px",
+                    minHeight: "60px",
+                    objectFit: "contain",
                   }}
                   onError={(e) => {
-                    console.error('Logo failed to load:', e);
-                    e.currentTarget.style.display = 'none';
+                    console.error("Logo failed to load:", e);
+                    e.currentTarget.style.display = "none";
                   }}
-                  onLoad={() => console.log('Logo loaded successfully')}
+                  onLoad={() => console.log("Logo loaded successfully")}
                 />
               </div>
-              <p className="text-gray-600 text-center mt-4">Please complete this form to request mental health services.</p>
+              <p className="text-gray-600 text-center mt-4">
+                Please complete this form to request mental health services.
+              </p>
             </div>
 
             {submissionStatus.status !== "idle" && (
@@ -299,16 +372,18 @@ export default function IntakeForm() {
               />
             )}
 
-            <form 
+            <form
               onSubmit={(e) => {
                 console.log("Form onSubmit event triggered");
                 handleSubmit(onSubmit)(e);
-              }} 
+              }}
               className="space-y-8"
             >
               {/* Section 1: Service Request Type */}
               <div className="space-y-4">
-                <h2 className="text-xl font-medium text-gray-700">1. I am requesting services for:</h2>
+                <h2 className="text-xl font-medium text-gray-700">
+                  1. I am requesting services for:
+                </h2>
                 <Controller
                   control={control}
                   name="serviceRequestType"
@@ -318,19 +393,31 @@ export default function IntakeForm() {
                       defaultValue={field.value}
                       className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-6"
                     >
-                      {["My Child", "Myself", "My Family", "My Partner & Myself"].map((option) => (
+                      {[
+                        "My Child",
+                        "Myself",
+                        "My Family",
+                        "My Partner & Myself",
+                      ].map((option) => (
                         <div key={option} className="flex items-center">
-                          <RadioGroupItem id={`service-${option}`} value={option} />
-                          <Label htmlFor={`service-${option}`} className="ml-2">{option}</Label>
+                          <RadioGroupItem
+                            id={`service-${option}`}
+                            value={option}
+                          />
+                          <Label htmlFor={`service-${option}`} className="ml-2">
+                            {option}
+                          </Label>
                         </div>
                       ))}
                     </RadioGroup>
                   )}
                 />
                 {errors.serviceRequestType && (
-                  <p className="text-red-500 text-sm mt-1">{errors.serviceRequestType.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.serviceRequestType.message}
+                  </p>
                 )}
-                
+
                 {watchServiceRequestType === "My Child" && (
                   <div className="mt-4">
                     <Label className="block text-sm font-medium text-gray-700 mb-1">
@@ -348,29 +435,41 @@ export default function IntakeForm() {
                             <SelectValue placeholder="Select custody type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Sole Custody">Sole Custody</SelectItem>
-                            <SelectItem value="Joint Custody">Joint Custody</SelectItem>
-                            <SelectItem value="CYFD Custody">CYFD Custody</SelectItem>
+                            <SelectItem value="Sole Custody">
+                              Sole Custody
+                            </SelectItem>
+                            <SelectItem value="Joint Custody">
+                              Joint Custody
+                            </SelectItem>
+                            <SelectItem value="CYFD Custody">
+                              CYFD Custody
+                            </SelectItem>
                             <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
                     />
                     {errors.custodyType && (
-                      <p className="text-red-500 text-sm mt-1">{errors.custodyType.message}</p>
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.custodyType.message}
+                      </p>
                     )}
                   </div>
                 )}
 
-                {(watchServiceRequestType === "My Family" || watchServiceRequestType === "My Partner & Myself") && (
+                {(watchServiceRequestType === "My Family" ||
+                  watchServiceRequestType === "My Partner & Myself") && (
                   <div className="mt-4 border border-gray-200 rounded-md p-4 bg-gray-50">
                     <h3 className="text-md font-medium text-gray-700 mb-3">
                       Please list all participants:
                     </h3>
-                    
+
                     <div className="space-y-3">
                       {fields.map((field, index) => (
-                        <div key={field.id} className="border border-gray-200 rounded-md p-4 mb-4">
+                        <div
+                          key={field.id}
+                          className="border border-gray-200 rounded-md p-4 mb-4"
+                        >
                           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3">
                             <div className="sm:col-span-6">
                               <FormField
@@ -392,7 +491,7 @@ export default function IntakeForm() {
                               />
                             </div>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3">
                             <div className="sm:col-span-6">
                               <FormField
@@ -409,13 +508,15 @@ export default function IntakeForm() {
                                 label="Phone Number"
                                 type="tel"
                                 register={register}
-                                error={errors.participantNames?.[index]?.phoneNumber}
+                                error={
+                                  errors.participantNames?.[index]?.phoneNumber
+                                }
                               />
                             </div>
                           </div>
-                          
+
                           <div className="flex justify-end">
-                            <Button 
+                            <Button
                               type="button"
                               variant="outline"
                               size="sm"
@@ -427,11 +528,18 @@ export default function IntakeForm() {
                           </div>
                         </div>
                       ))}
-                      
+
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => append({ name: "", dob: "", email: "", phoneNumber: "" })}
+                        onClick={() =>
+                          append({
+                            name: "",
+                            dob: "",
+                            email: "",
+                            phoneNumber: "",
+                          })
+                        }
                         className="mt-2"
                       >
                         Add Participant
@@ -445,7 +553,9 @@ export default function IntakeForm() {
 
               {/* Section 2: Form Completed By */}
               <div className="space-y-4">
-                <h2 className="text-xl font-medium text-gray-700">2. Form Completed By:</h2>
+                <h2 className="text-xl font-medium text-gray-700">
+                  2. Form Completed By:
+                </h2>
                 <FormField
                   id="formCompletedBy"
                   label="Full Name"
@@ -459,8 +569,10 @@ export default function IntakeForm() {
 
               {/* Section 3: Patient Information */}
               <div className="space-y-6">
-                <h2 className="text-xl font-medium text-gray-700">3. Patient Information</h2>
-                
+                <h2 className="text-xl font-medium text-gray-700">
+                  3. Patient Information
+                </h2>
+
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <FormField
                     id="firstName"
@@ -477,7 +589,7 @@ export default function IntakeForm() {
                     required
                   />
                 </div>
-                
+
                 <FormField
                   id="preferredName"
                   label="Preferred Name"
@@ -494,7 +606,7 @@ export default function IntakeForm() {
                     error={errors.dateOfBirth}
                     required
                   />
-                  
+
                   <div className="sm:col-span-2">
                     <Label className="block text-sm font-medium text-gray-700 mb-1">
                       Sex <span className="text-red-500">*</span>
@@ -510,15 +622,22 @@ export default function IntakeForm() {
                         >
                           {["Male", "Female", "Other"].map((option) => (
                             <div key={option} className="flex items-center">
-                              <RadioGroupItem id={`sex-${option}`} value={option} />
-                              <Label htmlFor={`sex-${option}`} className="ml-2">{option}</Label>
+                              <RadioGroupItem
+                                id={`sex-${option}`}
+                                value={option}
+                              />
+                              <Label htmlFor={`sex-${option}`} className="ml-2">
+                                {option}
+                              </Label>
                             </div>
                           ))}
                         </RadioGroup>
                       )}
                     />
                     {errors.sex && (
-                      <p className="text-red-500 text-sm mt-1">{errors.sex.message}</p>
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.sex.message}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -599,7 +718,8 @@ export default function IntakeForm() {
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Do you consent to receiving emails? <span className="text-red-500">*</span>
+                    Do you consent to receiving emails?{" "}
+                    <span className="text-red-500">*</span>
                   </Label>
                   <Controller
                     control={control}
@@ -612,15 +732,25 @@ export default function IntakeForm() {
                       >
                         {["Yes", "No"].map((option) => (
                           <div key={option} className="flex items-center">
-                            <RadioGroupItem id={`email-consent-${option}`} value={option} />
-                            <Label htmlFor={`email-consent-${option}`} className="ml-2">{option}</Label>
+                            <RadioGroupItem
+                              id={`email-consent-${option}`}
+                              value={option}
+                            />
+                            <Label
+                              htmlFor={`email-consent-${option}`}
+                              className="ml-2"
+                            >
+                              {option}
+                            </Label>
                           </div>
                         ))}
                       </RadioGroup>
                     )}
                   />
                   {errors.consentToEmail && (
-                    <p className="text-red-500 text-sm mt-1">{errors.consentToEmail.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.consentToEmail.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -629,10 +759,13 @@ export default function IntakeForm() {
 
               {/* Desired Modality */}
               <div className="space-y-4">
-                <h2 className="text-xl font-medium text-gray-700">Desired Modality</h2>
+                <h2 className="text-xl font-medium text-gray-700">
+                  Desired Modality
+                </h2>
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Please select your desired modality <span className="text-red-500">*</span>
+                    Please select your desired modality{" "}
+                    <span className="text-red-500">*</span>
                   </Label>
                   <Controller
                     control={control}
@@ -654,7 +787,9 @@ export default function IntakeForm() {
                     )}
                   />
                   {errors.desiredModality && (
-                    <p className="text-red-500 text-sm mt-1">{errors.desiredModality.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.desiredModality.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -663,11 +798,14 @@ export default function IntakeForm() {
 
               {/* Section 4-6: Insurance Information */}
               <div className="space-y-6">
-                <h2 className="text-xl font-medium text-gray-700">4. Insurance Information</h2>
-                
+                <h2 className="text-xl font-medium text-gray-700">
+                  4. Insurance Information
+                </h2>
+
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Insurance Type (select all that apply) <span className="text-red-500">*</span>
+                    Insurance Type (select all that apply){" "}
+                    <span className="text-red-500">*</span>
                   </Label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     {insuranceTypes.map((type) => (
@@ -683,22 +821,32 @@ export default function IntakeForm() {
                                 if (checked) {
                                   field.onChange([...field.value, type]);
                                 } else {
-                                  field.onChange(field.value?.filter((value) => value !== type));
+                                  field.onChange(
+                                    field.value?.filter(
+                                      (value) => value !== type,
+                                    ),
+                                  );
                                 }
                               }}
                             />
                           )}
                         />
-                        <Label htmlFor={`insurance-${type}`} className="ml-2">{type}</Label>
+                        <Label htmlFor={`insurance-${type}`} className="ml-2">
+                          {type}
+                        </Label>
                       </div>
                     ))}
                   </div>
                   {errors.insuranceType && (
-                    <p className="text-red-500 text-sm mt-1">{errors.insuranceType.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.insuranceType.message}
+                    </p>
                   )}
                 </div>
 
-                <h3 className="text-lg font-medium text-gray-700">5. Primary Insurance</h3>
+                <h3 className="text-lg font-medium text-gray-700">
+                  5. Primary Insurance
+                </h3>
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <FormField
@@ -738,13 +886,16 @@ export default function IntakeForm() {
                       )}
                     />
                     {errors.subscriberRelation && (
-                      <p className="text-red-500 text-sm mt-1">{errors.subscriberRelation.message}</p>
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.subscriberRelation.message}
+                      </p>
                     )}
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
-                  {watchSubscriberRelation && watchSubscriberRelation !== "Self" ? (
+                  {watchSubscriberRelation &&
+                  watchSubscriberRelation !== "Self" ? (
                     <>
                       <FormField
                         id="primarySubscriberName"
@@ -787,8 +938,16 @@ export default function IntakeForm() {
                       >
                         {["Yes", "No"].map((option) => (
                           <div key={option} className="flex items-center">
-                            <RadioGroupItem id={`secondary-insurance-${option}`} value={option} />
-                            <Label htmlFor={`secondary-insurance-${option}`} className="ml-2">{option}</Label>
+                            <RadioGroupItem
+                              id={`secondary-insurance-${option}`}
+                              value={option}
+                            />
+                            <Label
+                              htmlFor={`secondary-insurance-${option}`}
+                              className="ml-2"
+                            >
+                              {option}
+                            </Label>
                           </div>
                         ))}
                       </RadioGroup>
@@ -798,7 +957,9 @@ export default function IntakeForm() {
 
                 {watchHasSecondaryInsurance === "Yes" && (
                   <>
-                    <h3 className="text-lg font-medium text-gray-700">6. Secondary Insurance</h3>
+                    <h3 className="text-lg font-medium text-gray-700">
+                      6. Secondary Insurance
+                    </h3>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                       <FormField
                         id="secondaryInsurance"
@@ -837,13 +998,16 @@ export default function IntakeForm() {
                           )}
                         />
                         {errors.secondarySubscriberRelation && (
-                          <p className="text-red-500 text-sm mt-1">{errors.secondarySubscriberRelation.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.secondarySubscriberRelation.message}
+                          </p>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
-                      {watchSecondarySubscriberRelation && watchSecondarySubscriberRelation !== "Self" ? (
+                      {watchSecondarySubscriberRelation &&
+                      watchSecondarySubscriberRelation !== "Self" ? (
                         <>
                           <FormField
                             id="secondarySubscriberName"
@@ -878,8 +1042,10 @@ export default function IntakeForm() {
 
               {/* Section 7: Reasons for Seeking Therapy */}
               <div className="space-y-6">
-                <h2 className="text-xl font-medium text-gray-700">7. Reasons for Seeking Therapy</h2>
-                
+                <h2 className="text-xl font-medium text-gray-700">
+                  7. Reasons for Seeking Therapy
+                </h2>
+
                 <FormField
                   id="reasonForSeekingServices"
                   label="Why are you seeking services?"
@@ -889,14 +1055,18 @@ export default function IntakeForm() {
                   rows={4}
                   required
                 />
-                
+
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-3">
-                    Select all that apply <span className="text-red-500">*</span>
+                    Select all that apply{" "}
+                    <span className="text-red-500">*</span>
                   </Label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {therapyReasons.map((reason) => (
-                      <div key={reason} className="flex items-center bg-gray-50 p-2 rounded-md">
+                      <div
+                        key={reason}
+                        className="flex items-center bg-gray-50 p-2 rounded-md"
+                      >
                         <Controller
                           control={control}
                           name="reasonsForTherapy"
@@ -908,18 +1078,29 @@ export default function IntakeForm() {
                                 if (checked) {
                                   field.onChange([...field.value, reason]);
                                 } else {
-                                  field.onChange(field.value?.filter((value) => value !== reason));
+                                  field.onChange(
+                                    field.value?.filter(
+                                      (value) => value !== reason,
+                                    ),
+                                  );
                                 }
                               }}
                             />
                           )}
                         />
-                        <Label htmlFor={`reason-${reason}`} className="ml-2 text-gray-700">{reason}</Label>
+                        <Label
+                          htmlFor={`reason-${reason}`}
+                          className="ml-2 text-gray-700"
+                        >
+                          {reason}
+                        </Label>
                       </div>
                     ))}
                   </div>
                   {errors.reasonsForTherapy && (
-                    <p className="text-red-500 text-sm mt-1">{errors.reasonsForTherapy.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.reasonsForTherapy.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -928,11 +1109,14 @@ export default function IntakeForm() {
 
               {/* Section 8: Prior Counseling */}
               <div className="space-y-6">
-                <h2 className="text-xl font-medium text-gray-700">8. Prior Counseling</h2>
-                
+                <h2 className="text-xl font-medium text-gray-700">
+                  8. Prior Counseling
+                </h2>
+
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Have you had counseling before? <span className="text-red-500">*</span>
+                    Have you had counseling before?{" "}
+                    <span className="text-red-500">*</span>
                   </Label>
                   <Controller
                     control={control}
@@ -945,15 +1129,25 @@ export default function IntakeForm() {
                       >
                         {["Yes", "No"].map((option) => (
                           <div key={option} className="flex items-center">
-                            <RadioGroupItem id={`prior-counseling-${option}`} value={option} />
-                            <Label htmlFor={`prior-counseling-${option}`} className="ml-2">{option}</Label>
+                            <RadioGroupItem
+                              id={`prior-counseling-${option}`}
+                              value={option}
+                            />
+                            <Label
+                              htmlFor={`prior-counseling-${option}`}
+                              className="ml-2"
+                            >
+                              {option}
+                            </Label>
                           </div>
                         ))}
                       </RadioGroup>
                     )}
                   />
                   {errors.priorCounseling && (
-                    <p className="text-red-500 text-sm mt-1">{errors.priorCounseling.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.priorCounseling.message}
+                    </p>
                   )}
                 </div>
 
@@ -968,14 +1162,14 @@ export default function IntakeForm() {
                       rows={3}
                       required={watchPriorCounseling === "Yes"}
                     />
-                    
+
                     <FormField
                       id="whoTheySawBefore"
                       label="Who did you receive services with before?"
                       register={register}
                       error={errors.whoTheySawBefore}
                     />
-                    
+
                     <div className="space-y-3">
                       <Controller
                         control={control}
@@ -990,14 +1184,17 @@ export default function IntakeForm() {
                               />
                             </div>
                             <div className="ml-3 text-sm">
-                              <Label htmlFor="wasAtTFC" className="text-gray-700">
+                              <Label
+                                htmlFor="wasAtTFC"
+                                className="text-gray-700"
+                              >
                                 Was this at TFC?
                               </Label>
                             </div>
                           </div>
                         )}
                       />
-                      
+
                       {watchWasAtTFC && (
                         <FormField
                           id="providerRequested"
@@ -1007,7 +1204,7 @@ export default function IntakeForm() {
                         />
                       )}
                     </div>
-                    
+
                     <div>
                       <Label className="block text-sm font-medium text-gray-700 mb-1">
                         Outcome of previous services
@@ -1024,17 +1221,27 @@ export default function IntakeForm() {
                               <SelectValue placeholder="Select outcome" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Successful">Successful</SelectItem>
-                              <SelectItem value="Somewhat helpful">Somewhat helpful</SelectItem>
-                              <SelectItem value="Not helpful">Not helpful</SelectItem>
-                              <SelectItem value="Incomplete">Incomplete</SelectItem>
+                              <SelectItem value="Successful">
+                                Successful
+                              </SelectItem>
+                              <SelectItem value="Somewhat helpful">
+                                Somewhat helpful
+                              </SelectItem>
+                              <SelectItem value="Not helpful">
+                                Not helpful
+                              </SelectItem>
+                              <SelectItem value="Incomplete">
+                                Incomplete
+                              </SelectItem>
                               <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
                       />
                       {errors.priorOutcome && (
-                        <p className="text-red-500 text-sm mt-1">{errors.priorOutcome.message}</p>
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.priorOutcome.message}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -1045,13 +1252,25 @@ export default function IntakeForm() {
 
               {/* Section 9: Signature */}
               <div className="space-y-4">
-                <h2 className="text-xl font-medium text-gray-700">9. Signature</h2>
-                
+                <h2 className="text-xl font-medium text-gray-700">
+                  9. Signature
+                </h2>
+
                 <div className="border border-gray-200 bg-gray-50 p-4 rounded-md">
                   <p className="text-sm text-gray-700 mb-4">
-                    By typing my initials below and checking the confirmation box, I acknowledge that I understand this form is a request for services and does not guarantee an appointment. I understand that my submission places me on a waitlist and that someone from The Family Connection will contact me once a provider becomes available to discuss next steps. Specific appointment times are not guaranteed and may vary depending on provider availability. If I have any questions, I will contact the office at (505) 717-1155. I confirm that the information I have provided is accurate and complete to the best of my knowledge.
+                    By typing my initials below and checking the confirmation
+                    box, I acknowledge that I understand this form is a request
+                    for services and does not guarantee an appointment. I
+                    understand that my submission places me on a waitlist and
+                    that someone from The Family Connection will contact me once
+                    a provider becomes available to discuss next steps. Specific
+                    appointment times are not guaranteed and may vary depending
+                    on provider availability. If I have any questions, I will
+                    contact the office at (505) 717-1155. I confirm that the
+                    information I have provided is accurate and complete to the
+                    best of my knowledge.
                   </p>
-                  
+
                   <FormField
                     id="initials"
                     label="Digital Signature (Type your initials) *"
@@ -1059,7 +1278,7 @@ export default function IntakeForm() {
                     error={errors.initials}
                     required
                   />
-                  
+
                   <div className="mt-4">
                     <Controller
                       control={control}
@@ -1074,15 +1293,22 @@ export default function IntakeForm() {
                             />
                           </div>
                           <div className="ml-3 text-sm">
-                            <Label htmlFor="confirmAccuracy" className="text-gray-700">
-                              I confirm that the information submitted is accurate and complete to the best of my knowledge. <span className="text-red-500">*</span>
+                            <Label
+                              htmlFor="confirmAccuracy"
+                              className="text-gray-700"
+                            >
+                              I confirm that the information submitted is
+                              accurate and complete to the best of my knowledge.{" "}
+                              <span className="text-red-500">*</span>
                             </Label>
                           </div>
                         </div>
                       )}
                     />
                     {errors.confirmAccuracy && (
-                      <p className="text-red-500 text-sm mt-1">{errors.confirmAccuracy.message}</p>
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.confirmAccuracy.message}
+                      </p>
                     )}
                   </div>
                 </div>
