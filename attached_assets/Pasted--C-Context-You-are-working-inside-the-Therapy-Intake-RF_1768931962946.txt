@@ -1,0 +1,100 @@
+
+### **C --- Context**
+
+You are working inside the **Therapy Intake (RFS) Form** of the TFC CRM frontend (Replit app).
+
+There is an existing **"Desired Modality"** dropdown with the options:
+
+-   In Person
+
+-   Telehealth
+
+-   Hybrid
+
+We need to **expand this dropdown** to capture **location-specific in-person preferences**, based on updated operational needs.
+
+⚠️ **This change is UI-only. Do not modify backend logic, validation logic, submission handling, or data mapping unless strictly required to support new dropdown values.**
+
+* * * * *
+
+### **L --- Logic**
+
+Update the **Desired Modality dropdown options only**.
+
+Replace or extend the current options to include **these exact options** (wording matters):
+
+1.  **In Person -- Albuquerque**
+
+2.  **In Person -- Rio Rancho**
+
+3.  **In Person -- Los Lunas**
+
+4.  **In Person -- Albuquerque or Rio Rancho**
+
+5.  **Telehealth**
+
+6.  **Hybrid**
+
+7.  **Flexible (Open to Any Option)**
+
+Rules:
+
+-   This remains a **single-select dropdown**
+
+-   It is still a **required field**
+
+-   Do **not** add conditional logic
+
+-   Do **not** add new fields
+
+-   Do **not** remove or change other questions
+
+* * * * *
+
+### **E --- Execution**
+
+1.  Locate the component or config that defines the **Desired Modality** dropdown.
+
+2.  Update only the option list to match the values above.
+
+3.  Ensure the form still renders, validates, and submits as before.
+
+4.  Do **not** refactor or clean up unrelated code.
+
+5.  If the dropdown options are defined in a constants file or schema, update them there --- otherwise update inline.
+
+* * * * *
+
+### **A --- Acceptance Criteria**
+
+-   The dropdown displays **all 7 options listed above**
+
+-   No other fields are changed
+
+-   No visual regressions elsewhere in the form
+
+-   Existing **Reason for Seeking Therapy** fields (free-text + multi-select) are untouched
+
+-   Form still submits successfully
+
+* * * * *
+
+### **R --- Restrictions (Very Important)**
+
+❌ Do NOT:
+
+-   Modify backend APIs
+
+-   Modify n8n, Excel, or workflows
+
+-   Touch waitlist logic
+
+-   Touch validation schemas beyond allowing the new string values
+
+-   Rename existing fields
+
+-   Change labels outside this dropdown
+
+✅ This task is **purely additive and localized**.
+
+* * * * *

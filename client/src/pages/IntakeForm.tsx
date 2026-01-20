@@ -116,7 +116,7 @@ const formSchema = z.object({
   secondarySubscriberID: z.string().optional(),
 
   // Desired Modality
-  desiredModality: z.enum(["In Person", "Telehealth", "Hybrid"], {
+  desiredModality: z.enum(["In Person - Albuquerque", "In Person - Rio Rancho", "In Person - Los Lunas", "In Person - Albuquerque or Rio Rancho", "Telehealth", "Hybrid", "Flexible (Open to Any Option)"], {
     required_error: "Please select a desired modality",
   }),
 
@@ -784,9 +784,13 @@ export default function IntakeForm() {
                           <SelectValue placeholder="Select modality" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="In Person">In Person</SelectItem>
+                          <SelectItem value="In Person - Albuquerque">In Person - Albuquerque</SelectItem>
+                          <SelectItem value="In Person - Rio Rancho">In Person - Rio Rancho</SelectItem>
+                          <SelectItem value="In Person - Los Lunas">In Person - Los Lunas</SelectItem>
+                          <SelectItem value="In Person - Albuquerque or Rio Rancho">In Person - Albuquerque or Rio Rancho</SelectItem>
                           <SelectItem value="Telehealth">Telehealth</SelectItem>
                           <SelectItem value="Hybrid">Hybrid</SelectItem>
+                          <SelectItem value="Flexible (Open to Any Option)">Flexible (Open to Any Option)</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
