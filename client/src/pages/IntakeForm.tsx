@@ -97,7 +97,8 @@ const formSchema = z.object({
     .min(1, "Select at least one insurance type"),
 
   // Primary Insurance
-  primaryInsurance: z.string().optional(),
+  primaryInsurance: z.string().min(1, "Please select a primary insurance provider"),
+  primaryInsuranceOther: z.string().optional(),
   primaryInsuranceID: z.string().optional(),
   subscriberRelation: z.enum(["Self", "Parent", "Child", "Partner"]).optional(),
   primarySubscriberName: z.string().optional(),
@@ -151,6 +152,15 @@ const formSchema = z.object({
   confirmAccuracy: z.boolean().refine((val) => val === true, {
     message: "You must confirm the accuracy of the information",
   }),
+}).refine((data) => {
+  // If "Other (please specify)" is selected, primaryInsuranceOther is required
+  if (data.primaryInsurance === "Other (please specify)") {
+    return data.primaryInsuranceOther && data.primaryInsuranceOther.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "Please specify your insurance provider",
+  path: ["primaryInsuranceOther"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -199,6 +209,7 @@ export default function IntakeForm() {
       // Section 3: Insurance Information
       insuranceType: [],
       primaryInsurance: "",
+      primaryInsuranceOther: "",
       primaryInsuranceID: "",
       subscriberRelation: undefined,
       primarySubscriberName: "",
@@ -247,6 +258,7 @@ export default function IntakeForm() {
     "secondarySubscriberRelation" as const,
   );
   const watchWasAtTFC = watch("wasAtTFC" as const);
+  const watchPrimaryInsurance = watch("primaryInsurance" as const);
 
   // Therapy reasons checkbox options
   const therapyReasons = [
@@ -279,11 +291,31 @@ export default function IntakeForm() {
 
   // Insurance types
   const insuranceTypes = [
-    "Private Pay",
     "Commercial Insurance",
     "Medicaid",
     "Medicare",
     "EAP",
+    "Self-Pay (Cash / Out-of-Pocket)",
+  ];
+
+  // Primary insurance provider options
+  const primaryInsuranceOptions = [
+    "VACCN (VA Community Care)",
+    "Tricare",
+    "Presbyterian Commercial",
+    "Presbyterian Turquoise Care",
+    "BlueCross BlueShield Commercial",
+    "BlueCross BlueShield Turquoise Care",
+    "United Healthcare",
+    "Aetna",
+    "UMR",
+    "Molina",
+    "Medicare",
+    "Medicaid",
+    "ComPsych",
+    "Self-Pay (Cash / Out-of-Pocket)",
+    "EAP",
+    "Other (please specify)",
   ];
 
   // Counseling types
@@ -858,12 +890,37 @@ export default function IntakeForm() {
                 </h3>
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                  <FormField
-                    id="primaryInsurance"
-                    label="Primary Insurance Provider"
-                    register={register}
-                    error={errors.primaryInsurance}
-                  />
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700 mb-1">
+                      Primary Insurance Provider <span className="text-red-500">*</span>
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="primaryInsurance"
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select insurance provider" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {primaryInsuranceOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.primaryInsurance && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.primaryInsurance.message}
+                      </p>
+                    )}
+                  </div>
                   <FormField
                     id="primaryInsuranceID"
                     label="ID Number"
@@ -901,6 +958,19 @@ export default function IntakeForm() {
                     )}
                   </div>
                 </div>
+
+                {/* Conditional "Other" insurance input */}
+                {watchPrimaryInsurance === "Other (please specify)" && (
+                  <div className="mt-4">
+                    <FormField
+                      id="primaryInsuranceOther"
+                      label="Please specify your insurance provider"
+                      register={register}
+                      error={errors.primaryInsuranceOther}
+                      required
+                    />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-4">
                   {watchSubscriberRelation &&

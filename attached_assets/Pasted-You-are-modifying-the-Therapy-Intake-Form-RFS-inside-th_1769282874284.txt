@@ -1,0 +1,72 @@
+You are modifying the Therapy Intake Form (RFS) inside this Replit project.
+
+CONTEXT
+This intake form feeds data into a CRM used by a therapy practice (The Family Connection).
+Currently, the insurance section allows free-text entry, which is causing inconsistent data
+inside the CRM and unreadable Insights dashboards.
+
+The goal is to STRUCTURE insurance intake without breaking existing downstream logic.
+
+SCOPE OF CHANGE
+Only modify the Insurance Information section (Section 4 and Section 5).
+Do NOT change unrelated fields, validation rules, submission logic, or backend mappings
+unless explicitly required to support this change.
+
+REQUIREMENTS
+
+1. Section 4 – Insurance Type
+- Keep this section as a checkbox group.
+- Update labels to the following options:
+  - Commercial Insurance
+  - Medicaid
+  - Medicare
+  - EAP
+  - Self-Pay (Cash / Out-of-Pocket)
+
+2. Section 5 – Primary Insurance Provider (MAIN CHANGE)
+- Replace the existing free-text input with a REQUIRED dropdown.
+- Dropdown options must be EXACTLY:
+
+  - VACCN (VA Community Care)
+  - Tricare
+  - Presbyterian Commercial
+  - Presbyterian Turquoise Care
+  - BlueCross BlueShield Commercial
+  - BlueCross BlueShield Turquoise Care
+  - United Healthcare
+  - Aetna
+  - UMR
+  - Molina
+  - Medicare
+  - Medicaid
+  - ComPsych
+  - Self-Pay (Cash / Out-of-Pocket)
+  - EAP
+  - Other (please specify)
+
+3. Conditional Logic
+- If the user selects “Other (please specify)”:
+  - Display a required free-text input labeled:
+    “Please specify your insurance provider”
+
+4. Fields that must remain unchanged
+- Insurance ID Number
+- Subscriber relationship dropdown
+- Subscriber ID
+- Secondary insurance Yes/No logic
+
+5. Data Integrity
+- Ensure the selected dropdown value is submitted as a normalized string
+  (no free-text unless “Other” is selected).
+- Do not rename backend keys unless absolutely required.
+- Preserve compatibility with existing CRM ingestion.
+
+DELIVERABLE
+- Updated intake form UI with the structured dropdown
+- Conditional “Other” input
+- No regressions in form submission or validation
+
+After implementation, briefly summarize:
+- What files were changed
+- What logic was added
+- Any assumptions made
