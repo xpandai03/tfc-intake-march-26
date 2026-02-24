@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,7 @@ import SubmitButton from "@/components/SubmitButton";
 import FormResponse from "@/components/FormResponse";
 import axios from "axios";
 import tfcLogoPath from "@assets/TFC Logo color (3)_1754422698445.jpg";
+import { getTranslations, type Language } from "@/lib/translations";
 
 const getDateString = () => {
   try {
@@ -166,6 +168,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function IntakeForm() {
+  const [language, setLanguage] = useState<Language>("en");
+  const t = getTranslations(language);
   const [submissionStatus, setSubmissionStatus] = useState<{
     status: "idle" | "success" | "error";
     message?: string;
@@ -341,17 +345,15 @@ export default function IntakeForm() {
         },
       );
 
-      // Set success feedback
       setSubmissionStatus({
         status: "success",
-        message: "Thank you! Your form has been submitted successfully.",
+        message: t.successMessage,
       });
       window.scrollTo(0, 0);
       reset();
     } catch (error) {
       console.log("Error caught in form submission:", error);
-      let errorMessage =
-        "Sorry, there was an error submitting your form. Please try again.";
+      let errorMessage = t.errorMessage;
 
       if (axios.isAxiosError(error)) {
         console.log("Axios error details:", {
@@ -398,7 +400,7 @@ export default function IntakeForm() {
                 />
               </div>
               <p className="text-gray-600 text-center mt-4">
-                Please complete this form to request mental health services.
+                {t.formSubtitle}
               </p>
             </div>
 
@@ -416,10 +418,20 @@ export default function IntakeForm() {
               }}
               className="space-y-8"
             >
+              {/* Language Toggle */}
+              <div className="flex items-center justify-end gap-3 pb-2">
+                <span className="text-sm font-medium text-gray-600">English</span>
+                <Switch
+                  checked={language === "es"}
+                  onCheckedChange={(checked) => setLanguage(checked ? "es" : "en")}
+                />
+                <span className="text-sm font-medium text-gray-600">Español</span>
+              </div>
+
               {/* Section 1: Service Request Type */}
               <div className="space-y-4">
                 <h2 className="text-xl font-medium text-gray-700">
-                  1. I am requesting services for:
+                  {t.section1Title}
                 </h2>
                 <Controller
                   control={control}
@@ -430,19 +442,14 @@ export default function IntakeForm() {
                       defaultValue={field.value}
                       className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-6"
                     >
-                      {[
-                        "My Child",
-                        "Myself",
-                        "My Family",
-                        "My Partner & Myself",
-                      ].map((option) => (
+                      {(["My Child", "Myself", "My Family", "My Partner & Myself"] as const).map((option) => (
                         <div key={option} className="flex items-center">
                           <RadioGroupItem
                             id={`service-${option}`}
                             value={option}
                           />
                           <Label htmlFor={`service-${option}`} className="ml-2">
-                            {option}
+                            {t.serviceOptions[option]}
                           </Label>
                         </div>
                       ))}
@@ -458,7 +465,7 @@ export default function IntakeForm() {
                 {watchServiceRequestType === "My Child" && (
                   <div className="mt-4">
                     <Label className="block text-sm font-medium text-gray-700 mb-1">
-                      Custody Type
+                      {t.custodyTypeLabel}
                     </Label>
                     <Controller
                       control={control}
@@ -469,19 +476,12 @@ export default function IntakeForm() {
                           defaultValue={field.value}
                         >
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select custody type" />
+                            <SelectValue placeholder={t.custodyPlaceholder} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Sole Custody">
-                              Sole Custody
-                            </SelectItem>
-                            <SelectItem value="Joint Custody">
-                              Joint Custody
-                            </SelectItem>
-                            <SelectItem value="CYFD Custody">
-                              CYFD Custody
-                            </SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
+                            {(["Sole Custody", "Joint Custody", "CYFD Custody", "Other"] as const).map((opt) => (
+                              <SelectItem key={opt} value={opt}>{t.custodyOptions[opt]}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       )}
@@ -498,7 +498,7 @@ export default function IntakeForm() {
                   watchServiceRequestType === "My Partner & Myself") && (
                   <div className="mt-4 border border-gray-200 rounded-md p-4 bg-gray-50">
                     <h3 className="text-md font-medium text-gray-700 mb-3">
-                      Please list all participants:
+                      {t.participantsTitle}
                     </h3>
 
                     <div className="space-y-3">
@@ -511,7 +511,7 @@ export default function IntakeForm() {
                             <div className="sm:col-span-6">
                               <FormField
                                 id={`participantNames.${index}.name`}
-                                label={`Participant ${index + 1}`}
+                                label={`${t.participantLabel} ${index + 1}`}
                                 register={register}
                                 error={errors.participantNames?.[index]?.name}
                                 required
@@ -520,7 +520,7 @@ export default function IntakeForm() {
                             <div className="sm:col-span-6">
                               <FormField
                                 id={`participantNames.${index}.dob`}
-                                label="Date of Birth"
+                                label={t.participantDOB}
                                 type="date"
                                 register={register}
                                 error={errors.participantNames?.[index]?.dob}
@@ -533,7 +533,7 @@ export default function IntakeForm() {
                             <div className="sm:col-span-6">
                               <FormField
                                 id={`participantNames.${index}.email`}
-                                label="Email"
+                                label={t.participantEmail}
                                 type="email"
                                 register={register}
                                 error={errors.participantNames?.[index]?.email}
@@ -542,7 +542,7 @@ export default function IntakeForm() {
                             <div className="sm:col-span-6">
                               <FormField
                                 id={`participantNames.${index}.phoneNumber`}
-                                label="Phone Number"
+                                label={t.participantPhone}
                                 type="tel"
                                 register={register}
                                 error={
@@ -560,7 +560,7 @@ export default function IntakeForm() {
                               onClick={() => remove(index)}
                               className="text-red-600"
                             >
-                              Remove Participant
+                              {t.removeParticipant}
                             </Button>
                           </div>
                         </div>
@@ -579,7 +579,7 @@ export default function IntakeForm() {
                         }
                         className="mt-2"
                       >
-                        Add Participant
+                        {t.addParticipant}
                       </Button>
                     </div>
                   </div>
@@ -591,11 +591,11 @@ export default function IntakeForm() {
               {/* Section 2: Form Completed By */}
               <div className="space-y-4">
                 <h2 className="text-xl font-medium text-gray-700">
-                  2. Form Completed By:
+                  {t.section2Title}
                 </h2>
                 <FormField
                   id="formCompletedBy"
-                  label="Full Name"
+                  label={t.fullNameLabel}
                   register={register}
                   error={errors.formCompletedBy}
                   required
@@ -607,20 +607,20 @@ export default function IntakeForm() {
               {/* Section 3: Patient Information */}
               <div className="space-y-6">
                 <h2 className="text-xl font-medium text-gray-700">
-                  3. Patient Information
+                  {t.section3Title}
                 </h2>
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <FormField
                     id="firstName"
-                    label="First Name"
+                    label={t.firstName}
                     register={register}
                     error={errors.firstName}
                     required
                   />
                   <FormField
                     id="lastName"
-                    label="Last Name"
+                    label={t.lastName}
                     register={register}
                     error={errors.lastName}
                     required
@@ -629,7 +629,7 @@ export default function IntakeForm() {
 
                 <FormField
                   id="preferredName"
-                  label="Preferred Name"
+                  label={t.preferredName}
                   register={register}
                   error={errors.preferredName}
                 />
@@ -637,7 +637,7 @@ export default function IntakeForm() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <FormField
                     id="dateOfBirth"
-                    label="Date of Birth"
+                    label={t.dateOfBirth}
                     type="date"
                     register={register}
                     error={errors.dateOfBirth}
@@ -646,7 +646,7 @@ export default function IntakeForm() {
 
                   <div className="sm:col-span-2">
                     <Label className="block text-sm font-medium text-gray-700 mb-1">
-                      Sex <span className="text-red-500">*</span>
+                      {t.sexLabel} <span className="text-red-500">*</span>
                     </Label>
                     <Controller
                       control={control}
@@ -657,14 +657,14 @@ export default function IntakeForm() {
                           defaultValue={field.value}
                           className="flex space-x-6"
                         >
-                          {["Male", "Female", "Other"].map((option) => (
+                          {(["Male", "Female", "Other"] as const).map((option) => (
                             <div key={option} className="flex items-center">
                               <RadioGroupItem
                                 id={`sex-${option}`}
                                 value={option}
                               />
                               <Label htmlFor={`sex-${option}`} className="ml-2">
-                                {option}
+                                {t.sexOptions[option]}
                               </Label>
                             </div>
                           ))}
@@ -681,7 +681,7 @@ export default function IntakeForm() {
 
                 <FormField
                   id="genderIdentity"
-                  label="Gender Identity (if different from sex assigned at birth)"
+                  label={t.genderIdentity}
                   register={register}
                   error={errors.genderIdentity}
                 />
@@ -689,14 +689,14 @@ export default function IntakeForm() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <FormField
                     id="street"
-                    label="Street Address"
+                    label={t.streetAddress}
                     register={register}
                     error={errors.street}
                     required
                   />
                   <FormField
                     id="apt"
-                    label="Apt/Suite"
+                    label={t.aptSuite}
                     register={register}
                     error={errors.apt}
                   />
@@ -705,21 +705,21 @@ export default function IntakeForm() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <FormField
                     id="city"
-                    label="City"
+                    label={t.city}
                     register={register}
                     error={errors.city}
                     required
                   />
                   <FormField
                     id="state"
-                    label="State"
+                    label={t.state}
                     register={register}
                     error={errors.state}
                     required
                   />
                   <FormField
                     id="zip"
-                    label="Zip Code"
+                    label={t.zipCode}
                     register={register}
                     error={errors.zip}
                     required
@@ -729,14 +729,14 @@ export default function IntakeForm() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <FormField
                     id="homePhone"
-                    label="Home Phone"
+                    label={t.homePhone}
                     type="tel"
                     register={register}
                     error={errors.homePhone}
                   />
                   <FormField
                     id="mobilePhone"
-                    label="Mobile Phone"
+                    label={t.mobilePhone}
                     type="tel"
                     register={register}
                     error={errors.mobilePhone}
@@ -746,7 +746,7 @@ export default function IntakeForm() {
 
                 <FormField
                   id="email"
-                  label="Email"
+                  label={t.emailLabel}
                   type="email"
                   register={register}
                   error={errors.email}
@@ -755,7 +755,7 @@ export default function IntakeForm() {
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Do you consent to receiving emails?{" "}
+                    {t.consentToEmail}{" "}
                     <span className="text-red-500">*</span>
                   </Label>
                   <Controller
@@ -767,7 +767,7 @@ export default function IntakeForm() {
                         defaultValue={field.value}
                         className="flex space-x-6"
                       >
-                        {["Yes", "No"].map((option) => (
+                        {(["Yes", "No"] as const).map((option) => (
                           <div key={option} className="flex items-center">
                             <RadioGroupItem
                               id={`email-consent-${option}`}
@@ -777,7 +777,7 @@ export default function IntakeForm() {
                               htmlFor={`email-consent-${option}`}
                               className="ml-2"
                             >
-                              {option}
+                              {option === "Yes" ? t.yes : t.no}
                             </Label>
                           </div>
                         ))}
@@ -797,11 +797,11 @@ export default function IntakeForm() {
               {/* Desired Modality */}
               <div className="space-y-4">
                 <h2 className="text-xl font-medium text-gray-700">
-                  Desired Modality
+                  {t.desiredModalityTitle}
                 </h2>
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Please select your desired modality{" "}
+                    {t.desiredModalityLabel}{" "}
                     <span className="text-red-500">*</span>
                   </Label>
                   <Controller
@@ -813,16 +813,12 @@ export default function IntakeForm() {
                         defaultValue={field.value}
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select modality" />
+                          <SelectValue placeholder={t.desiredModalityPlaceholder} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="In Person - Albuquerque">In Person - Albuquerque</SelectItem>
-                          <SelectItem value="In Person - Rio Rancho">In Person - Rio Rancho</SelectItem>
-                          <SelectItem value="In Person - Los Lunas">In Person - Los Lunas</SelectItem>
-                          <SelectItem value="In Person - Albuquerque or Rio Rancho">In Person - Albuquerque or Rio Rancho</SelectItem>
-                          <SelectItem value="Telehealth">Telehealth</SelectItem>
-                          <SelectItem value="Hybrid">Hybrid</SelectItem>
-                          <SelectItem value="Flexible (Open to Any Option)">Flexible (Open to Any Option)</SelectItem>
+                          {(["In Person - Albuquerque", "In Person - Rio Rancho", "In Person - Los Lunas", "In Person - Albuquerque or Rio Rancho", "Telehealth", "Hybrid", "Flexible (Open to Any Option)"] as const).map((opt) => (
+                            <SelectItem key={opt} value={opt}>{t.modalityOptions[opt]}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     )}
@@ -840,12 +836,12 @@ export default function IntakeForm() {
               {/* Section 4-6: Insurance Information */}
               <div className="space-y-6">
                 <h2 className="text-xl font-medium text-gray-700">
-                  4. Insurance Information
+                  {t.section4Title}
                 </h2>
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Insurance Type (select all that apply){" "}
+                    {t.insuranceTypeLabel}{" "}
                     <span className="text-red-500">*</span>
                   </Label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
@@ -873,7 +869,7 @@ export default function IntakeForm() {
                           )}
                         />
                         <Label htmlFor={`insurance-${type}`} className="ml-2">
-                          {type}
+                          {t.insuranceTypes[type as keyof typeof t.insuranceTypes] || type}
                         </Label>
                       </div>
                     ))}
@@ -886,13 +882,13 @@ export default function IntakeForm() {
                 </div>
 
                 <h3 className="text-lg font-medium text-gray-700">
-                  5. Primary Insurance
+                  {t.section5Title}
                 </h3>
 
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <div>
                     <Label className="block text-sm font-medium text-gray-700 mb-1">
-                      Primary Insurance Provider <span className="text-red-500">*</span>
+                      {t.primaryInsuranceLabel} <span className="text-red-500">*</span>
                     </Label>
                     <Controller
                       control={control}
@@ -903,12 +899,12 @@ export default function IntakeForm() {
                           defaultValue={field.value}
                         >
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select insurance provider" />
+                            <SelectValue placeholder={t.primaryInsurancePlaceholder} />
                           </SelectTrigger>
                           <SelectContent>
                             {primaryInsuranceOptions.map((option) => (
                               <SelectItem key={option} value={option}>
-                                {option}
+                                {t.primaryInsuranceOptions[option as keyof typeof t.primaryInsuranceOptions] || option}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -923,13 +919,13 @@ export default function IntakeForm() {
                   </div>
                   <FormField
                     id="primaryInsuranceID"
-                    label="ID Number"
+                    label={t.idNumber}
                     register={register}
                     error={errors.primaryInsuranceID}
                   />
                   <div>
                     <Label className="block text-sm font-medium text-gray-700 mb-1">
-                      Subscriber is:
+                      {t.subscriberIs}
                     </Label>
                     <Controller
                       control={control}
@@ -940,13 +936,12 @@ export default function IntakeForm() {
                           defaultValue={field.value}
                         >
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select relationship" />
+                            <SelectValue placeholder={t.subscriberPlaceholder} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Self">Self</SelectItem>
-                            <SelectItem value="Parent">Parent</SelectItem>
-                            <SelectItem value="Child">Child</SelectItem>
-                            <SelectItem value="Partner">Partner</SelectItem>
+                            {(["Self", "Parent", "Child", "Partner"] as const).map((opt) => (
+                              <SelectItem key={opt} value={opt}>{t.subscriberOptions[opt]}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       )}
@@ -959,12 +954,11 @@ export default function IntakeForm() {
                   </div>
                 </div>
 
-                {/* Conditional "Other" insurance input */}
                 {watchPrimaryInsurance === "Other (please specify)" && (
                   <div className="mt-4">
                     <FormField
                       id="primaryInsuranceOther"
-                      label="Please specify your insurance provider"
+                      label={t.specifyInsurance}
                       register={register}
                       error={errors.primaryInsuranceOther}
                       required
@@ -978,14 +972,14 @@ export default function IntakeForm() {
                     <>
                       <FormField
                         id="primarySubscriberName"
-                        label="Subscriber's Name"
+                        label={t.subscriberName}
                         register={register}
                         error={errors.primarySubscriberName}
                         required
                       />
                       <FormField
                         id="primarySubscriberDOB"
-                        label="Subscriber's Date of Birth"
+                        label={t.subscriberDOB}
                         type="date"
                         register={register}
                         error={errors.primarySubscriberDOB}
@@ -995,7 +989,7 @@ export default function IntakeForm() {
                   ) : null}
                   <FormField
                     id="subscriberID"
-                    label="Subscriber ID"
+                    label={t.subscriberID}
                     register={register}
                     error={errors.subscriberID}
                     required
@@ -1004,7 +998,7 @@ export default function IntakeForm() {
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Do you have secondary insurance?
+                    {t.secondaryInsuranceQuestion}
                   </Label>
                   <Controller
                     control={control}
@@ -1015,7 +1009,7 @@ export default function IntakeForm() {
                         defaultValue={field.value}
                         className="flex space-x-6"
                       >
-                        {["Yes", "No"].map((option) => (
+                        {(["Yes", "No"] as const).map((option) => (
                           <div key={option} className="flex items-center">
                             <RadioGroupItem
                               id={`secondary-insurance-${option}`}
@@ -1025,7 +1019,7 @@ export default function IntakeForm() {
                               htmlFor={`secondary-insurance-${option}`}
                               className="ml-2"
                             >
-                              {option}
+                              {option === "Yes" ? t.yes : t.no}
                             </Label>
                           </div>
                         ))}
@@ -1037,24 +1031,24 @@ export default function IntakeForm() {
                 {watchHasSecondaryInsurance === "Yes" && (
                   <>
                     <h3 className="text-lg font-medium text-gray-700">
-                      6. Secondary Insurance
+                      {t.section6Title}
                     </h3>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                       <FormField
                         id="secondaryInsurance"
-                        label="Secondary Insurance Provider"
+                        label={t.secondaryInsuranceLabel}
                         register={register}
                         error={errors.secondaryInsurance}
                       />
                       <FormField
                         id="secondaryInsuranceID"
-                        label="ID Number"
+                        label={t.idNumber}
                         register={register}
                         error={errors.secondaryInsuranceID}
                       />
                       <div>
                         <Label className="block text-sm font-medium text-gray-700 mb-1">
-                          Subscriber is:
+                          {t.subscriberIs}
                         </Label>
                         <Controller
                           control={control}
@@ -1065,13 +1059,12 @@ export default function IntakeForm() {
                               defaultValue={field.value}
                             >
                               <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select relationship" />
+                                <SelectValue placeholder={t.subscriberPlaceholder} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Self">Self</SelectItem>
-                                <SelectItem value="Parent">Parent</SelectItem>
-                                <SelectItem value="Child">Child</SelectItem>
-                                <SelectItem value="Partner">Partner</SelectItem>
+                                {(["Self", "Parent", "Child", "Partner"] as const).map((opt) => (
+                                  <SelectItem key={opt} value={opt}>{t.subscriberOptions[opt]}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           )}
@@ -1090,14 +1083,14 @@ export default function IntakeForm() {
                         <>
                           <FormField
                             id="secondarySubscriberName"
-                            label="Subscriber's Name"
+                            label={t.subscriberName}
                             register={register}
                             error={errors.secondarySubscriberName}
                             required
                           />
                           <FormField
                             id="secondarySubscriberDOB"
-                            label="Subscriber's Date of Birth"
+                            label={t.subscriberDOB}
                             type="date"
                             register={register}
                             error={errors.secondarySubscriberDOB}
@@ -1107,7 +1100,7 @@ export default function IntakeForm() {
                       ) : null}
                       <FormField
                         id="secondarySubscriberID"
-                        label="Subscriber ID"
+                        label={t.subscriberID}
                         register={register}
                         error={errors.secondarySubscriberID}
                         required
@@ -1122,12 +1115,12 @@ export default function IntakeForm() {
               {/* Section 7: Reasons for Seeking Therapy */}
               <div className="space-y-6">
                 <h2 className="text-xl font-medium text-gray-700">
-                  7. Reasons for Seeking Therapy
+                  {t.section7Title}
                 </h2>
 
                 <FormField
                   id="reasonForSeekingServices"
-                  label="Why are you seeking services?"
+                  label={t.reasonForServices}
                   register={register}
                   error={errors.reasonForSeekingServices}
                   multiline
@@ -1137,7 +1130,7 @@ export default function IntakeForm() {
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-3">
-                    Select all that apply{" "}
+                    {t.selectAllApply}{" "}
                     <span className="text-red-500">*</span>
                   </Label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1171,7 +1164,7 @@ export default function IntakeForm() {
                           htmlFor={`reason-${reason}`}
                           className="ml-2 text-gray-700"
                         >
-                          {reason}
+                          {t.therapyReasons[reason as keyof typeof t.therapyReasons] || reason}
                         </Label>
                       </div>
                     ))}
@@ -1189,12 +1182,12 @@ export default function IntakeForm() {
               {/* Section 8: Prior Counseling */}
               <div className="space-y-6">
                 <h2 className="text-xl font-medium text-gray-700">
-                  8. Prior Counseling
+                  {t.section8Title}
                 </h2>
 
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-1">
-                    Have you had counseling before?{" "}
+                    {t.priorCounselingQuestion}{" "}
                     <span className="text-red-500">*</span>
                   </Label>
                   <Controller
@@ -1206,7 +1199,7 @@ export default function IntakeForm() {
                         defaultValue={field.value}
                         className="flex space-x-6"
                       >
-                        {["Yes", "No"].map((option) => (
+                        {(["Yes", "No"] as const).map((option) => (
                           <div key={option} className="flex items-center">
                             <RadioGroupItem
                               id={`prior-counseling-${option}`}
@@ -1216,7 +1209,7 @@ export default function IntakeForm() {
                               htmlFor={`prior-counseling-${option}`}
                               className="ml-2"
                             >
-                              {option}
+                              {option === "Yes" ? t.yes : t.no}
                             </Label>
                           </div>
                         ))}
@@ -1234,7 +1227,7 @@ export default function IntakeForm() {
                   <div className="mt-4 space-y-4">
                     <FormField
                       id="priorCounselingDetails"
-                      label="When and with whom? (Please provide details)"
+                      label={t.priorCounselingDetails}
                       register={register}
                       error={errors.priorCounselingDetails}
                       multiline={true}
@@ -1244,7 +1237,7 @@ export default function IntakeForm() {
 
                     <FormField
                       id="whoTheySawBefore"
-                      label="Who did you receive services with before?"
+                      label={t.whoSawBefore}
                       register={register}
                       error={errors.whoTheySawBefore}
                     />
@@ -1267,7 +1260,7 @@ export default function IntakeForm() {
                                 htmlFor="wasAtTFC"
                                 className="text-gray-700"
                               >
-                                Was this at TFC?
+                                {t.wasAtTFC}
                               </Label>
                             </div>
                           </div>
@@ -1277,7 +1270,7 @@ export default function IntakeForm() {
                       {watchWasAtTFC && (
                         <FormField
                           id="providerRequested"
-                          label="If yes, who?"
+                          label={t.ifYesWho}
                           register={register}
                           error={errors.providerRequested}
                         />
@@ -1286,7 +1279,7 @@ export default function IntakeForm() {
 
                     <div>
                       <Label className="block text-sm font-medium text-gray-700 mb-1">
-                        Outcome of previous services
+                        {t.outcomeLabel}
                       </Label>
                       <Controller
                         control={control}
@@ -1297,22 +1290,12 @@ export default function IntakeForm() {
                             defaultValue={field.value}
                           >
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select outcome" />
+                              <SelectValue placeholder={t.outcomePlaceholder} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Successful">
-                                Successful
-                              </SelectItem>
-                              <SelectItem value="Somewhat helpful">
-                                Somewhat helpful
-                              </SelectItem>
-                              <SelectItem value="Not helpful">
-                                Not helpful
-                              </SelectItem>
-                              <SelectItem value="Incomplete">
-                                Incomplete
-                              </SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
+                              {(["Successful", "Somewhat helpful", "Not helpful", "Incomplete", "Other"] as const).map((opt) => (
+                                <SelectItem key={opt} value={opt}>{t.outcomeOptions[opt]}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         )}
@@ -1332,27 +1315,17 @@ export default function IntakeForm() {
               {/* Section 9: Signature */}
               <div className="space-y-4">
                 <h2 className="text-xl font-medium text-gray-700">
-                  9. Signature
+                  {t.section9Title}
                 </h2>
 
                 <div className="border border-gray-200 bg-gray-50 p-4 rounded-md">
                   <p className="text-sm text-gray-700 mb-4">
-                    By typing my initials below and checking the confirmation
-                    box, I acknowledge that I understand this form is a request
-                    for services and does not guarantee an appointment. I
-                    understand that my submission places me on a waitlist and
-                    that someone from The Family Connection will contact me once
-                    a provider becomes available to discuss next steps. Specific
-                    appointment times are not guaranteed and may vary depending
-                    on provider availability. If I have any questions, I will
-                    contact the office at (505) 717-1155. I confirm that the
-                    information I have provided is accurate and complete to the
-                    best of my knowledge.
+                    {t.signatureDisclaimer}
                   </p>
 
                   <FormField
                     id="initials"
-                    label="Digital Signature (Type your initials) *"
+                    label={t.digitalSignature}
                     register={register}
                     error={errors.initials}
                     required
@@ -1376,8 +1349,7 @@ export default function IntakeForm() {
                               htmlFor="confirmAccuracy"
                               className="text-gray-700"
                             >
-                              I confirm that the information submitted is
-                              accurate and complete to the best of my knowledge.{" "}
+                              {t.confirmAccuracy}{" "}
                               <span className="text-red-500">*</span>
                             </Label>
                           </div>
@@ -1393,7 +1365,12 @@ export default function IntakeForm() {
                 </div>
               </div>
 
-              <SubmitButton isSubmitting={isSubmitting} />
+              <SubmitButton
+                isSubmitting={isSubmitting}
+                submitText={t.submitButton}
+                submittingText={t.submittingButton}
+                privacyText={t.privacyNotice}
+              />
             </form>
 
             {submissionStatus.status !== "idle" && (
