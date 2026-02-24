@@ -419,7 +419,7 @@ export default function IntakeForm() {
               className="space-y-8"
             >
               {/* Language Toggle */}
-              <div className="flex items-center justify-end gap-3 pb-2">
+              <div className="flex items-center justify-center gap-3 pb-2">
                 <span className="text-sm font-medium text-gray-600">English</span>
                 <Switch
                   checked={language === "es"}
