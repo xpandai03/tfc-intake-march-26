@@ -326,18 +326,44 @@ export default function IntakeForm() {
   const counselingTypes = ["Inpatient", "Outpatient"];
 
   const onSubmit = async (data: FormValues) => {
-    console.log("onSubmit function called");
     try {
-      console.log(
-        "Form validation errors:",
-        Object.keys(errors).length > 0 ? errors : "No errors",
-      );
-      console.log("Submitting data:", data); // Temporary log for debugging
+      const fullName = [data.firstName, data.lastName].filter(Boolean).join(" ");
+      const phone = data.mobilePhone || data.homePhone || "";
 
-      console.log("Sending POST request to Azure webhook URL...");
+      const noteLines = [
+        `Service Request: ${data.serviceRequestType || "N/A"}`,
+        `Form Completed By: ${data.formCompletedBy || "N/A"}`,
+        `Preferred Name: ${data.preferredName || "N/A"}`,
+        `DOB: ${data.dateOfBirth || "N/A"}`,
+        `Sex: ${data.sex || "N/A"}`,
+        `Gender Identity: ${data.genderIdentity || "N/A"}`,
+        `Address: ${[data.street, data.apt, data.city, data.state, data.zip].filter(Boolean).join(", ")}`,
+        `Custody Type: ${data.custodyType || "N/A"}`,
+        `Insurance: ${data.insuranceType || "N/A"} — ${data.primaryInsurance || "N/A"} (ID: ${data.primaryInsuranceID || "N/A"})`,
+        `Desired Modality: ${data.desiredModality || "N/A"}`,
+        `Reasons for Therapy: ${data.reasonsForTherapy || "N/A"}`,
+        `Reason for Seeking Services: ${data.reasonForSeekingServices || "N/A"}`,
+        `Prior Counseling: ${data.priorCounseling || "N/A"}${data.priorCounselingDetails ? ` — ${data.priorCounselingDetails}` : ""}`,
+        `Provider Requested: ${data.providerRequested || "N/A"}`,
+        `Submitted At: ${getDateString()}`,
+      ];
+
+      if (data.participantNames?.length) {
+        noteLines.push(
+          `Participants: ${data.participantNames.map((p) => p.name).filter(Boolean).join(", ")}`,
+        );
+      }
+
+      const payload = {
+        name: fullName,
+        email: data.email || "",
+        phone,
+        notes: noteLines.join("\n"),
+      };
+
       await axios.post(
-        "https://prod-187.westus.logic.azure.com:443/workflows/783efb077f0041b59cfa677b1dedcac3/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=vx5yn2DfZ731OFDWTdPlOPNmDv0qaXRpnyJheORXx48",
-        { ...data, formSubmittedAt: getDateString() },
+        "https://tfc-crm-2-0.fly.dev/api/intake",
+        payload,
         {
           headers: {
             "Content-Type": "application/json",
@@ -352,13 +378,11 @@ export default function IntakeForm() {
       window.scrollTo(0, 0);
       reset();
     } catch (error) {
-      console.log("Error caught in form submission:", error);
       let errorMessage = t.errorMessage;
 
       if (axios.isAxiosError(error)) {
-        console.log("Axios error details:", {
+        console.error("Submission error:", {
           status: error.response?.status,
-          statusText: error.response?.statusText,
           data: error.response?.data,
         });
 
